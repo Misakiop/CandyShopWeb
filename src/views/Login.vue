@@ -117,10 +117,14 @@ const onSubmit = () => {
         const Atuserinfo = {
           id: res.data.id,
           username: res.data.username,
+          password: res.data.password,
           telephone: res.data.telephone,
+          gender: res.data.gender,
+          address: res.data.address,
           email: res.data.email,
           introduce: res.data.introduce,
-          imguid: res.data.imguid
+          imguid: res.data.imguid,
+          registTime: res.data.registTime,
         };
 
         sessionStorage.setItem("Atuserinfo", JSON.stringify(Atuserinfo));
