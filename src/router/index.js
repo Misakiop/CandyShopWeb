@@ -12,10 +12,11 @@ import Adminhome from '../views/admin/AdminHome.vue';
 import CandyList from "../views/admin/menu/CandyList.vue";
 import UserList from "../views/admin/menu/UserList.vue";
 
-//用户
+// 用户
 import UserHome from "../views/user/UserHome.vue";
 import CandyListU from "../views/user/menu/CandyListU.vue";
 import CartList from "../views/user/menu/CartList.vue";
+import OrderListU from "../views/user/menu/OrderListU.vue"
 
 const routes = [
     {
@@ -60,7 +61,12 @@ const routes = [
             {
                 path: 'cartlist', 
                 meta: { title: "购物车列表" },
-                component: CandyList
+                component: CartList
+            },
+            {
+                path: 'orderlistu', 
+                meta: { title: "订单列表" },
+                component: OrderListU
             },
         ]
     },
