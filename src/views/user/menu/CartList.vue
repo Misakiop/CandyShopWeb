@@ -1,96 +1,72 @@
 <template>
-    <div>
-        <!-- 进度条 -->
-        <el-progress v-if="showProgress" style="margin-top: -15px; width: 100%;" :percentage="100" status="success"
-            :indeterminate="true" :duration="1" />
+    <el-row justify="center">
+        <div>
+            <!-- 进度条 -->
+            <el-progress v-if="showProgress" style="margin-top: -15px; width: 100%;" :percentage="100" status="success"
+                :indeterminate="true" :duration="1" />
 
-        <!-- 页头开始 -->
-        <el-page-header @back="onBack" style="margin-top: 10px;">
-            <template #breadcrumb>
-                <el-breadcrumb separator="/">
-                    <el-breadcrumb-item :to="{ path: 'index' }">
-                        主页
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item>
-                        <a href="./candylist">商品列表</a>
-                    </el-breadcrumb-item>
-                </el-breadcrumb>
-            </template>
-            <template #content>
-                <div class="search">
-                    <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" />
-                    <el-button type="primary" @click="handleSearch">搜索</el-button>
-                </div>
-            </template>
-        </el-page-header>
-        <!-- 页头结束 -->
-
-        <!-- 商品内容 -->
-        <div id="car-candylist">
-            <el-row :gutter="30">
-                <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
-                    <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="AddCart(item)">
-                        <!-- 使用动态绑定的图片 -->
-                        <el-image :src="item.imguid || 'http://121.40.60.41:8008/1.jpg'"
-                            style="width: 100%; height: 200px;">
-                            <template #error>
-                                <div class="image-slot">
-                                    <el-icon>
-                                        <Picture />
-                                    </el-icon>
-                                </div>
-                            </template>
-                        </el-image>
-
-                        <el-text line-clamp="2" class="mx-1 font-bold" style=" margin-top: 5px;">{{ item.name
-                            }}</el-text>
-                        <div class="drwaerboxit" style="margin-top: 5px;">
-                            <el-text class="mx-1 font-bold text-xl text-red-500 text-l" style="margin-right: 15px;">
-                                ￥{{ item.price }}
-                            </el-text>
-
-                            <el-tooltip class="box-item" effect="dark" content="加入购物车" placement="bottom">
-                                <el-button circle color="#f1a03a" style="margin-left: 60px" @click="AddCart(item)">
-                                    <el-icon :size="20" style="margin-left: -1px; color: white;">
-                                        <ShoppingCart />
-                                    </el-icon>
-                                </el-button>
-                            </el-tooltip>
-
-                            <el-button style="width: 66.5px; font-weight: 600; color: white" color="#ec602a"
-                                @click="toBuy">
-                                立即购买
-                            </el-button>
-                        </div>
-                        <el-text>剩余：</el-text>
-                        <el-text :style="{ color: item.num < 50 ? 'red' : '#6c6e71' }">{{ item.num }}</el-text>
-
-                    </el-card>
-                </el-col>
-            </el-row>
-        </div>
-        <!-- 商品结束 -->
-
-        <!-- 加入购物车抽屉开始 -->
-        <el-form :model="AddCartCandy" ref="addCartRef">
-            <el-drawer v-model="visible" :show-close="false" direction="btt" size="410px">
-                <template #header="{ close, titleId, titleClass }">
-                    <div style="max-width: 95%">
-                        <el-text :id="titleId" :class="titleClass" class="font-bold text-2xl"
-                            style="margin-left: 45px; max-width: 50%;" line-clamp="2">商品:{{ AddCartCandy.name
-                            }}</el-text>
-                    </div>
-                    <el-button type="danger" @click="close">
-                        <el-icon class="el-icon--left">
-                            <CircleCloseFilled />
-                        </el-icon>
-                        关闭
-                    </el-button>
+            <!-- 页头开始 -->
+            <el-page-header @back="onBack" style="margin-top: 10px;">
+                <template #breadcrumb>
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'index' }">
+                            <el-tag type="primary">首页</el-tag>
+                        </el-breadcrumb-item>
+                        <el-breadcrumb-item>
+                            <el-tag type="success" closable @close="handleClose(tag)">购物车</el-tag>
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
                 </template>
-                <div class="drwaerboxit">
-                    <div class="horizontal-form">
-                        <el-form-item label="" prop="imguid" style="margin-right: 15px; flex: 1;">
-                            <el-image :src="AddCartCandy.imguid" style="width: 200px; height: 200px;">
+            </el-page-header>
+            <!-- 页头结束 -->
+
+            <!-- 购物车内容开始 -->
+            <div id="car-candylist">
+                <el-table ref="NowCartchoosRef" :data="cartList" @selection-change="handleCartChange"
+                    style="width: 100%">
+                    <el-table-column type="selection" :selectable="selectable" width="100" />
+
+                    <el-table-column prop="candys.id" label="商品ID" width="100">
+                        <template #default="scope">
+                            <el-popover effect="light" trigger="hover" placement="top" width="auto">
+                                <template #default>
+                                    <p class="font-bold text-pink-400">商品名称:</p>
+                                    <el-text class="font-bold text-xs">{{ scope.row.candys.id }}</el-text>
+                                </template>
+                                <template #reference>
+                                    <el-tag size="large" :type="randomTagType">
+                                        <el-text :type="randomTagType" class="font-bold" style="width: 50px" truncated>
+                                            {{ scope.row.candys.id }}
+                                        </el-text>
+                                    </el-tag>
+                                </template>
+                            </el-popover>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column label="商品名称" width="200">
+                        <template #default="scope">
+                            <el-popover effect="light" trigger="hover" placement="top" width="auto">
+                                <template #default>
+                                    <p class="font-bold text-pink-400">商品名称:</p>
+                                    <el-text class="font-bold text-xs">{{ scope.row.candys.name }}</el-text>
+                                    <p class="font-bold text-pink-400">商品介绍:</p>
+                                    <el-text class="font-bold text-xs">{{ scope.row.candys.comment }}</el-text>
+                                </template>
+                                <template #reference>
+                                    <el-tag size="large" :type="randomTagType">
+                                        <el-text :type="randomTagType" class="font-bold" style="width: 120px" truncated>
+                                            {{ scope.row.candys.name }}
+                                        </el-text>
+                                    </el-tag>
+                                </template>
+                            </el-popover>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column label="商品图片" width="200">
+                        <template #default="scope">
+                            <el-image :src="scope.row.candys.imguid" style="width: 100px; height: 100px;">
                                 <template #error>
                                     <div class="image-slot">
                                         <el-icon>
@@ -99,133 +75,120 @@
                                     </div>
                                 </template>
                             </el-image>
-                        </el-form-item>
-                        <div style="width: 180px;margin-left: 10px;">
-                            <el-form-item prop="price" :label-width="formLabelWidth">
-                                <div>
-                                    <el-text class="text-red-500 font-extrabold text-x">￥</el-text>
-                                    <el-text class="text-red-500 font-extrabold text-3xl">
-                                        {{ AddCartCandy.price }}</el-text>
-                                </div>
-                            </el-form-item>
-                            <el-form-item prop="id" :label-width="formLabelWidth" style="margin-top: -20px;">
-                                <el-text class="text-xs">编号:{{ AddCartCandy.id }}</el-text>
-                            </el-form-item>
-                            <el-form-item prop="category" :label-width="formLabelWidth" style="margin-top: 30px;">
-                                <el-text style="letter-spacing: 3px;" class="font-bold">品类:{{ AddCartCandy.category
-                                    }}</el-text>
-                            </el-form-item>
-                            <el-form-item prop="num" :label-width="formLabelWidth" style="margin-top: 50px;">
-                                <el-text>库存:</el-text>
-                                <el-text :style="{ color: AddCartCandy.num < 50 ? 'red' : '#6c6e71' }">
-                                    {{ AddCartCandy.num }}</el-text>
-                            </el-form-item>
-                        </div>
+                        </template>
+                    </el-table-column>
 
-                        <el-divider direction="vertical" border-style="solid" style="height: 220px;" />
+                    <el-table-column label="重量/份" width="160">
+                        <template #default="scope">
+                            <el-text size="large" class="font-bold">{{ scope.row.candys.kgs }}g</el-text>
+                        </template>
+                    </el-table-column>
 
-                        <div style="width: 440px;margin-top: -20px">
-                            <el-form-item prop="comment" :label-width="formLabelWidth">
-                                <div>
-                                    <el-text style="letter-spacing: 3px;" class="font-bold text-xl">商品介绍:</el-text><br>
-                                    <el-text line-clamp="12" style="letter-spacing: 3px;"
-                                        class="font-bold text-xs">&nbsp;&nbsp;&nbsp;&nbsp;
-                                        {{ AddCartCandy.comment }}</el-text>
-                                </div>
-                            </el-form-item>
-                        </div>
-                        <div style="width:360px;margin-top: -20px;margin-left: 20px;">
-                            <el-text style="letter-spacing: 3px;" class="font-bold text-xl">商品参数:</el-text>
-                            <div style="margin-top: 10%;">
-                                <el-form-item prop="kgs" :label-width="formLabelWidth" style="margin-top: -10px;">
-                                    <el-text style="letter-spacing: 3px;">净&ensp;含&ensp;量:{{ AddCartCandy.kgs
-                                        }}g/份</el-text>
-                                </el-form-item>
-                                <el-form-item prop="size" :label-width="formLabelWidth" style="margin-top: -10px;">
-                                    <el-text style="letter-spacing: 3px;">产品尺寸:{{ AddCartCandy.size
-                                        }}</el-text>
-                                </el-form-item>
-                                <el-form-item prop="creationdate" :label-width="formLabelWidth"
-                                    style="margin-top: -10px;">
-                                    <el-text style="letter-spacing: 3px;">生成日期:{{ AddCartCandy.creationdate
-                                        }}</el-text>
-                                </el-form-item>
-                                <el-form-item prop="creationdate" :label-width="formLabelWidth"
-                                    style="margin-top: -10px;">
-                                    <el-text style="letter-spacing: 3px;" line-clamp="2">储存方法:{{ AddCartCandy.storagemethod
-                                        }}</el-text>
-                                </el-form-item>
-                            </div>
-                        </div>
+                    <el-table-column label="价格/份" width="160">
+                        <template #default="scope">
+                            <el-text size="large" style="font-size: 22px;" class="font-bold text-red-400">￥{{
+                                scope.row.buyPrice }}</el-text>
+                        </template>
+                    </el-table-column>
 
-                        <el-divider direction="vertical" border-style="solid" style="height: 220px;" />
-                        <div style="width: 400px; margin-top: -20px; margin-left: 25px;">
-                            <el-text class="font-bold"
-                                style="font-size: 15px; letter-spacing: 3px;">克重:</el-text><br /><br>
-                            <el-radio size="large" border>均克</el-radio><br />
-                            <div style="margin-top: 30px;">
-                                <el-input-number v-model="buyNum" size="large" :min="1" @change="NumChange"
-                                    style="width: 140px; " />
-                            </div>
-                            <el-button color="#f1a03a" class="font-bold" round size="large"
-                                style="margin-top: 30px; color: white; font-size: 17px; width: 120px;"
-                                @click="saveCart(AddCartCandy)">加入购物车</el-button>
-                            <el-button color="#ec602a" class="font-bold" round size="large"
-                                style="margin-top: 30px; color: white; font-size: 17px; width: 120px;">立即购买</el-button>
-                        </div>
+                    <el-table-column label="数量" width="240">
+                        <template #default="scope">
+                            <el-input-number v-model="scope.row.buyNum" size="large" :min="1" @change="NumChange"
+                                style="width: 140px; " />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column label="金额" width="160">
+                        <template #default="scope">
+                            <el-text size="large" style="font-size: 22px;" class="font-bold text-red-400">
+                                ￥{{ scope.row.buyPrice * scope.row.buyNum }}
+                            </el-text>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column label="操作" width="80">
+                        <template #default="scope">
+                            <el-button circle size="large" type="danger" @click="deleteCart(scope.row)">
+                                <el-icon size="large">
+                                    <DeleteFilled />
+                                </el-icon>
+                            </el-button>
+                        </template>
+                    </el-table-column>
+
+                </el-table>
+
+                <div style="width: 100%; height: 60px; border-bottom: 1px solid #eceef4;">
+                    <div style="position: absolute; right: 0;margin-right: 220px;display: flex;margin-top: 18px;">
+                        <p style="margin-right: 10px;">合计:</p>
+                        <el-text class="text-red-500" style="font-weight: 600; letter-spacing: 3px; font-size: 24px;
+                    margin-top: -6px;">
+                            ￥{{ totalAmount }}</el-text>
                     </div>
+
+                    <el-button size="large" type="danger" style="position: absolute; right: 0; margin-right: 5%;
+                     font-weight: 600; letter-spacing: 3px; font-size: 16px; margin-top: 10px;">
+                        立即下单
+                    </el-button>
                 </div>
-            </el-drawer>
-        </el-form>
-        <!-- 加入购物车抽屉结束 -->
 
-        <!-- 回到顶部 -->
-        <el-backtop :right="100" :bottom="100" />
-
-        <!-- 页码开始 -->
-        <el-footer>
-            <div style="display: flex; justify-content:center;">
-                <el-pagination background layout="prev, pager, next" :total="totalItems" :current-page="currentPage"
-                    :page-size="pageSize" @update:current-page="handlePageChange" />
             </div>
-        </el-footer>
-        <!-- 页码结束 -->
+            <!-- 购物车内容结束 -->
 
-    </div>
+
+            <!-- 回到顶部 -->
+            <el-backtop :right="100" :bottom="100" />
+
+        </div>
+    </el-row>
 </template>
 
 <script setup>
-import { ref, onMounted, } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { addToCart, getcandy, getcandyByname } from "../../../api/manager";
+import { delToCart, getcarts } from "../../../api/manager";
 import { msgla } from '../../../composables/util';
 
 const router = useRouter();
-const formLabelWidth = null;
-const candyList = ref([]);  // 商品列表
+const cartList = ref([]);  // 购物车列表
 const showProgress = ref(true);  // 控制进度条的显示与隐藏
 const totalItems = ref(0);  // 总商品数量
 const currentPage = ref(1);  // 当前页
-const pageSize = ref(12);  // 每页商品数量
-const inputsearch = ref('');  // 搜索框绑定数据
-const AddCartCandy = ref({}); //加入购物车表单的数据
-const visible = ref(false);  //加入购物车抽屉默认关闭
-const addCartRef = ref(null); // 添加购物车绑定数据
+const pageSize = ref(4);  // 每页商品数量
 const buyNum = ref(1);  //默认buyNum为1
+const selectedItems = ref([]);  // 选中的商品列表
 
+
+//颜色配置
+const tags = ref([
+    { type: 'primary' },
+    { type: 'success' },
+    { type: 'info' },
+    { type: 'warning' },
+    { type: 'danger' },
+])
+
+// 获取随机标签类型的方法
+const getRandomTagType = () => {
+    const randomIndex = Math.floor(Math.random() * tags.value.length);
+    return tags.value[randomIndex].type;
+};
+
+// 如果需要每个标签类型保持一致（例如页面加载后不再改变），可以使用 computed 属性
+const randomTagType = computed(() => getRandomTagType());
 
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
-    fetchCandyList(currentPage.value, pageSize.value);
+    fetchCartList(currentPage.value, pageSize.value);
 });
 
-// 获取商品列表数据
-const fetchCandyList = (pageNum, pageSize) => {
+// 获取购物车列表数据
+const fetchCartList = (pageNum, pageSize) => {
     showProgress.value = true;
-    getcandy(pageNum, pageSize)
+    getcarts(pageNum, pageSize)
         .then((res) => {
-            candyList.value = res.data.list;
-            totalItems.value = res.data.total;  // 设置总记录数
+            cartList.value = res.data.list;
+            totalItems.value = res.data.total;
             showProgress.value = false;
         })
         .catch((err) => {
@@ -237,47 +200,63 @@ const fetchCandyList = (pageNum, pageSize) => {
 
 };
 
-// 搜索按钮点击事件处理
-const handleSearch = () => {
-    showProgress.value = true;
-    currentPage.value = 1; // 搜索从第一页开始
-    const name = inputsearch.value.trim(); // 获取搜索内容
 
-    if (name === "") {
-        // 如果搜索框为空，显示所有商品
-        currentPage.value = 1;  // 重置为第一页
-        fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
+// 删除购物车中的指定商品
+const deleteCart = (item) => {
+    console.log("Item to delete: ", item);  // 打印删除的商品数据
+    if (!item) {
+        msgla("待删除商品信息不存在");
+        return;
     }
-    else {
-        getcandyByname(currentPage.value, pageSize.value, name)
-            .then((res) => {
-                candyList.value = res.data.list || []; // 更新商品列表
-                totalItems.value = res.data.total || 0; // 更新总记录数
-                showProgress.value = false;
-            })
-            .catch((err) => {
-                console.error("搜索失败: ", err);
-                showProgress.value = false;
-            });
-    }
+
+    // 创建 idArr 数组（如果后端需要的是数组格式）
+    const idArr = [item.candys.id];  // 传递一个包含商品 ID 的数组
+    console.log("ID array: ", idArr);  // 打印 ID 数组
+
+    // 调用删除接口
+    delToCart(idArr)
+        .then((res) => {
+            if (res.code === 200) {
+                msgla(res.msg);
+
+                // 从商品列表移除
+                const index = cartList.value.findIndex((candy) => candy.id === item.id);
+                if (index !== -1) {
+                    cartList.value.splice(index, 1);
+                }
+                fetchCartList(currentPage.value, pageSize.value);
+            } else {
+                msgla(res.msg, "error");
+            }
+        })
+        .catch((err) => {
+            msgla("删除失败: " + err.message,"error");
+        });
 };
 
-// 分页变化时的处理函数
-const handlePageChange = (page) => {
-    currentPage.value = page;
-    fetchCandyList(currentPage.value, pageSize.value);
+
+
+// 选择变化的处理函数
+const handleCartChange = (selection) => {
+    selectedItems.value = selection; // 更新选中的商品列表
 };
+
+// 计算合计金额，只计算选中的商品
+const totalAmount = computed(() => {
+    return selectedItems.value.reduce((total, item) => total + item.buyNum * item.buyPrice, 0);
+});
+
+//标签关闭
+const handleClose = () => {
+    router.push('index');
+}
+
 
 // 返回按钮点击事件处理
 const onBack = () => {
     router.push('index');
 };
 
-//打开添加购物车抽屉
-const AddCart = (item) => {
-    AddCartCandy.value = { ...item };
-    visible.value = true
-}
 
 //购买数量计数
 const NumChange = (value) => {
@@ -286,30 +265,6 @@ const NumChange = (value) => {
     }
 }
 
-//添加到购物车
-const saveCart = (item) => {
-    const cartItem = {
-        pid: item.id,       // 商品 ID
-        buyNum: buyNum.value,  // 当前购买数量
-        buyPrice: item.price,  // 商品价格
-    };
-
-    addToCart(cartItem)
-        .then((res) => {
-            console.log('完整响应数据:', res); // 打印完整的响应对象
-            if (res.code === 200) {
-                msgla('加入购物车成功')
-            } else {
-                console.error('服务器未返回有效数据:', res); // 打印未解析的响应
-                msgla('添加失败', "error");
-            }
-        })
-        .catch((error) => {
-            console.error('添加购物车请求失败:', error.message || error);
-            msgla('请求失败，请稍后重试', "error");
-        });
-
-}
 </script>
 
 <style scoped>
@@ -339,5 +294,14 @@ const saveCart = (item) => {
 .horizontal-form {
     display: flex;
     align-items: flex-start;
+}
+
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background-color: #f5f7fa;
+    border-top: 1px solid #dcdfe6;
 }
 </style>
