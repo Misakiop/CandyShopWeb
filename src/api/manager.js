@@ -32,7 +32,7 @@ export function getinfo(pageNum, pageSize) {
 
 //更新用户数据
 export function updateUserInfo(userData) {
-    return axios.put(`/api/admin/update`, userData, {
+    return axios.put(`/api/user/update`, userData, {
         params: {
             id: userData.id
         }
@@ -115,10 +115,26 @@ export function uploadPicture(file) {
 
 // 购物车相关------------------------------------------------------------
 //====================================================================
+//分页获取购物车
+export function getcarts(pageNum, pageSize) {
+    return axios.get("/api/cart/list", {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize
+        }
+    });
+}
+
 // 添加购物车
 export function addToCart(cartItem) {
     return axios.post('/api/cart/add', cartItem);
 }
+
+// 删除购物车
+export function delToCart(idArr) {
+    return axios.post('/api/cart/delete', idArr)
+}
+
 
 
 
