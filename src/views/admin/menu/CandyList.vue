@@ -9,10 +9,10 @@
       <template #breadcrumb>
         <el-breadcrumb separator="/">
           <el-breadcrumb-item :to="{ path: 'index' }">
-            主页
+            <el-tag type="primary">首页</el-tag>
           </el-breadcrumb-item>
           <el-breadcrumb-item>
-            <a href="./candylist">商品列表</a>
+            <el-tag type="success" closable @close="handleClose(tag)">商品列表</el-tag>
           </el-breadcrumb-item>
         </el-breadcrumb>
       </template>
@@ -21,7 +21,7 @@
           <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" />
           <el-button type="primary" @click="handleSearch">搜索</el-button>
           <el-tooltip class="box-item" effect="dark" content="添加商品" placement="right">
-            <el-button type="primary" @click="openAddDialog" circle><el-icon style="font-size: 40px;">
+            <el-button type="warning" @click="openAddDialog" circle><el-icon style="font-size: 40px;">
                 <CirclePlus />
               </el-icon></el-button></el-tooltip>
         </div>
@@ -31,7 +31,7 @@
 
     <!-- 商品内容 -->
     <div id="car-candylist">
-      <el-row :gutter="30">
+      <el-row :gutter="20" justify="center">
         <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
           <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="routerHand">
             <el-image :src="item.imguid || 'http://121.40.60.41:8008/1.jpg'" style="width: 100%; height: 200px;">
@@ -198,7 +198,7 @@
           </el-form-item>
         </div>
         <div style="margin-left: 8%">
-          <el-form-item label="生成日期" :label-width="formLabelWidth">
+          <el-form-item label="生产日期" :label-width="formLabelWidth">
             <el-date-picker v-model="newCandy.creationdate" type="date" placeholder="请输入商品生产日期" autocomplete="off" />
           </el-form-item>
           <el-form-item label="储存方法" prop="storagemethod" :label-width="formLabelWidth">
@@ -206,10 +206,9 @@
           </el-form-item>
           <!-- 上传图片 -->
           <el-form-item label="商品图片" prop="imguid" :label-width="formLabelWidth">
-            <el-upload action="http://localhost:8080/api/file/uploadPicture" 
-              :headers="uploadHeaders"
-              list-type="picture-card" :limit="1"
-              :on-success="handleAddUploadSuccess" :on-error="handleAddUploadError" :on-exceed="handleAddExceed">
+            <el-upload action="http://localhost:8080/api/file/uploadPicture" :headers="uploadHeaders"
+              list-type="picture-card" :limit="1" :on-success="handleAddUploadSuccess" :on-error="handleAddUploadError"
+              :on-exceed="handleAddExceed">
               <el-icon>
                 <Plus />
               </el-icon>
@@ -297,7 +296,7 @@ const newCandy = reactive({
   imguid: ''
 });
 
-const uploadHeaders = () =>{
+const uploadHeaders = () => {
   return {
     Authorization: `Bearer ${getToken()}`
   };
@@ -325,6 +324,11 @@ const fetchCandyList = (pageNum, pageSize) => {
   console.log("Page Size: ", pageSize);
 
 };
+
+//标签关闭
+const handleClose = () => {
+  router.push('index');
+}
 
 // 搜索按钮点击事件处理
 const handleSearch = () => {
@@ -357,10 +361,6 @@ const handlePageChange = (page) => {
   fetchCandyList(currentPage.value, pageSize.value);
 };
 
-// const openDeleteDialog = (item) => {
-//   currentItemToDelete.value = item; // 设置当前待删除商品
-//   deCandyDialogVisible.value = true;
-// };
 
 // 删除商品
 const deCandy = (item) => {
@@ -409,15 +409,18 @@ const saveEdit = () => {
       // 格式化日期字段
       const formattedCandy = {
         ...editCandy.value, // 保留所有字段
-        creationdate: dayjs(editCandy.value.creationdate).format("YYYY-MM-DD"),  // 格式化 creationdate
-        addtime: dayjs(editCandy.value.addtime).format("YYYY-MM-DDTHH:mm:ss"), // 格式化 addtime
+        creationdate: editCandy.value.creationdate
+          ? dayjs(editCandy.value.creationdate).format("YYYY-MM-DD")
+          : "",  // 如果为空，设置为默认值（空字符串）
+        addtime: editCandy.value.addtime
+          ? dayjs(editCandy.value.addtime).format("YYYY-MM-DDTHH:mm:ss")
+          : "",  // 如果为空，设置为默认值（空字符串）
       };
 
       // 调用更新 API
-      updateCandy(formattedCandy)  // 使用 formattedCandy
+      updateCandy(formattedCandy)
         .then((res) => {
           if (res.code === 200) {
-            // 更新成功，提示用户
             console.log("状态码:", res.code, "提示:", res.msg);
             msgla(res.msg);
 
@@ -427,10 +430,8 @@ const saveEdit = () => {
               candyList.value.splice(index, 1, { ...formattedCandy });
             }
 
-            // 关闭编辑对话框
             closeDialog();
           } else {
-            // API 返回非 200 状态码
             console.log("状态码:", res.code, "提示:", res.msg);
             msgls(res.msg);
           }
@@ -465,10 +466,13 @@ const submitNewCandy = () => {
       // 格式化日期字段
       const formattedNewCandy = {
         ...newCandy, // 保留所有字段
-        creationdate: dayjs(newCandy.creationdate).format("YYYY-MM-DD"), // 格式化 creationdate
+        creationdate: newCandy.creationdate
+          ? dayjs(newCandy.creationdate).format("YYYY-MM-DD")
+          : "", 
       };
 
-      addCandy(formattedNewCandy)  // 使用 formattedNewCandy
+
+      addCandy(formattedNewCandy) 
         .then((res) => {
           if (res.code === 200) {
             console.log(formattedNewCandy)
@@ -495,7 +499,7 @@ const handleAddUploadSuccess = (res) => {
     newCandy.imguid = res.data;
     msgla('图片上传成功');
   } else {
-    msgls(res.msg+ "error");
+    msgls(res.msg + "error");
   }
 };
 
@@ -507,7 +511,7 @@ const handleAddUploadError = (err) => {
 
 // 上传超出限制处理
 const handleAddExceed = () => {
-  msgls('只能上传一张图片！',"waring");
+  msgls('只能上传一张图片！', "waring");
 };
 
 

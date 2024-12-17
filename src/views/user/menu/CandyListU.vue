@@ -9,10 +9,10 @@
             <template #breadcrumb>
                 <el-breadcrumb separator="/">
                     <el-breadcrumb-item :to="{ path: 'index' }">
-                        主页
+                        <el-tag type="primary">首页</el-tag>
                     </el-breadcrumb-item>
                     <el-breadcrumb-item>
-                        <a href="./candylist">商品列表</a>
+                        <el-tag type="success" closable @close="handleClose(tag)">商品列表</el-tag>
                     </el-breadcrumb-item>
                 </el-breadcrumb>
             </template>
@@ -27,7 +27,7 @@
 
         <!-- 商品内容 -->
         <div id="car-candylist">
-            <el-row :gutter="30">
+            <el-row :gutter="20" justify="center">
                 <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
                     <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="AddCart(item)">
                         <!-- 使用动态绑定的图片 -->
@@ -49,18 +49,22 @@
                                 ￥{{ item.price }}
                             </el-text>
 
-                            <el-tooltip class="box-item" effect="dark" content="加入购物车" placement="bottom">
-                                <el-button circle color="#f1a03a" style="margin-left: 60px" @click="AddCart(item)">
-                                    <el-icon :size="20" style="margin-left: -1px; color: white;">
-                                        <ShoppingCart />
-                                    </el-icon>
-                                </el-button>
-                            </el-tooltip>
 
-                            <el-button style="width: 66.5px; font-weight: 600; color: white" color="#ec602a"
-                                @click="toBuy">
-                                立即购买
-                            </el-button>
+                            <el-badge :value="getCartItemQuantity(item.id)" class="item" :show-zero="false"
+                                :offset="[1, 2]">
+                                <el-tooltip effect="dark" content="加入购物车" placement="bottom">
+                                    <el-button circle color="#f1a03a" style="margin-left: 50px"
+                                        @click.stop="FastSaveCart(item)">
+                                        <el-icon :size="20" style="margin-left: -1px; color: white;">
+                                            <ShoppingCart />
+                                        </el-icon>
+                                    </el-button>
+                                </el-tooltip>
+                            </el-badge>
+
+
+                            <el-button style="margin-top: 8px; width: 66.5px; font-weight: 600; color: white;"
+                                color="#ec602a" @click="toBuy">立即购买</el-button>
                         </div>
                         <el-text>剩余：</el-text>
                         <el-text :style="{ color: item.num < 50 ? 'red' : '#6c6e71' }">{{ item.num }}</el-text>
@@ -152,8 +156,9 @@
                                 </el-form-item>
                                 <el-form-item prop="creationdate" :label-width="formLabelWidth"
                                     style="margin-top: -10px;">
-                                    <el-text style="letter-spacing: 3px;" line-clamp="2">储存方法:{{ AddCartCandy.storagemethod
-                                        }}</el-text>
+                                    <el-text style="letter-spacing: 3px;" line-clamp="2">储存方法:{{
+                                        AddCartCandy.storagemethod
+                                    }}</el-text>
                                 </el-form-item>
                             </div>
                         </div>
@@ -195,9 +200,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, } from 'vue';
+import { ref, onMounted, computed, watch, } from 'vue';
 import { useRouter } from 'vue-router';
-import { addToCart, getcandy, getcandyByname } from "../../../api/manager";
+import { addToCart, getcandy, getcandyByname, getcarts } from "../../../api/manager";
 import { msgla } from '../../../composables/util';
 
 const router = useRouter();
@@ -212,11 +217,13 @@ const AddCartCandy = ref({}); //加入购物车表单的数据
 const visible = ref(false);  //加入购物车抽屉默认关闭
 const addCartRef = ref(null); // 添加购物车绑定数据
 const buyNum = ref(1);  //默认buyNum为1
+const cartit = ref([]); //购物车数据
 
 
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
     fetchCandyList(currentPage.value, pageSize.value);
+    fetchCartList();
 });
 
 // 获取商品列表数据
@@ -236,6 +243,37 @@ const fetchCandyList = (pageNum, pageSize) => {
     console.log("Page Size: ", pageSize);
 
 };
+
+// 获取购物车数据
+const fetchCartList = () => {
+    getcarts()
+        .then((res) => {
+            cartit.value = res.data.list;  // 更新购物车数据
+        })
+        .catch((err) => {
+            console.error(err);
+        });
+};
+
+// 监听购物车数据的变化
+watch(cartit, (newCart) => {
+    // 当购物车更新时，重新计算或更新相关的视图
+    console.log('购物车更新:', newCart);
+});
+
+// 获取购物车中商品的数量
+const getCartItemQuantity = computed(() => (itemId) => {
+    const cartItem = cartit.value.find(item => item.candys.id === itemId);
+    return cartItem ? cartItem.buyNum : 0;
+});
+
+
+
+//标签关闭
+const handleClose = () => {
+    router.push('index');
+}
+
 
 // 搜索按钮点击事件处理
 const handleSearch = () => {
@@ -299,6 +337,7 @@ const saveCart = (item) => {
             console.log('完整响应数据:', res); // 打印完整的响应对象
             if (res.code === 200) {
                 msgla('加入购物车成功')
+                fetchCartList();
             } else {
                 console.error('服务器未返回有效数据:', res); // 打印未解析的响应
                 msgla('添加失败', "error");
@@ -310,6 +349,33 @@ const saveCart = (item) => {
         });
 
 }
+
+//快速添加到购物车
+const FastSaveCart = (item) => {
+    const cartItem = {
+        pid: item.id,           // 商品 ID
+        buyNum: 1,              //购买数量
+        buyPrice: item.price,   // 商品价格
+    };
+
+    addToCart(cartItem)
+        .then((res) => {
+            console.log('完整响应数据:', res); // 打印完整的响应对象
+            if (res.code === 200) {
+                msgla('加入购物车成功')
+                fetchCartList();
+            } else {
+                console.error('服务器未返回有效数据:', res); // 打印未解析的响应
+                msgla('添加失败', "error");
+            }
+        })
+        .catch((error) => {
+            console.error('添加购物车请求失败:', error.message || error);
+            msgla('请求失败，请稍后重试', "error");
+        });
+
+}
+
 </script>
 
 <style scoped>
@@ -318,6 +384,11 @@ const saveCart = (item) => {
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 10px;
+}
+
+.item {
+    margin-top: 10px;
+    margin-right: 30px;
 }
 
 .image-slot {
