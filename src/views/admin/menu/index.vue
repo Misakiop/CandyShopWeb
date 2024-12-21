@@ -3,7 +3,7 @@
       <div style="width: 100%; height: 100%; padding: 16px; box-sizing: border-box;">
         <div style="background-color: #aaabbc; width: 100%; height: 300px; border-radius: 30px; padding: 16px;">
           <div style="margin-top: 25px; margin-left: 35px;">
-            <el-text style="font-size: 50px; color: white; letter-spacing: 3px;" class="font-bold">下午好,</el-text><br>
+            <el-text style="font-size: 50px; color: white; letter-spacing: 3px;" class="font-bold">欢迎您,</el-text><br>
             <el-text style="font-size: 50px; color: white; letter-spacing: 3px;" class="font-bold">{{
               Atuserinfo.username }}</el-text>
           </div>

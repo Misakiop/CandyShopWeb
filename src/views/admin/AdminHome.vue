@@ -6,8 +6,8 @@
         <el-menu router :default-active="activeIndex" class="el-menu-demo" mode="horizontal" :ellipsis="false"
           @select="handleSelect" style="background-color: #efedf1;">
           <el-menu-item index="0">
-            <img style="width: 60px; height: 60; margin-left: 20px" src="/src/static/icon/candy.png"
-              alt="Element logo" />
+            <img style="width: 60px; height: 60; margin-left: 20px"
+              :src="'http://121.40.60.41:8008/a6da186b-6afd-4959-83ce-7f6b0dc1e935.png'" alt="Element logo" />
           </el-menu-item>
           <div style="
               position: absolute;
@@ -253,7 +253,7 @@
           </el-form-item>
           <!-- 上传图片开始 -->
           <div style="margin-left: 40px;">
-            <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
+            <el-upload action="http://121.40.60.41:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
               :on-success="handleUploadSuccess" :on-error="handleUploadError" :on-exceed="handleExceed"
               :headers="uploadHeaders" :on-preview="handlePictureCardPreview" :on-remove="handleRemove">
               <el-icon>
@@ -279,7 +279,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { getToken, removeToken } from "../../composables/auth";
@@ -291,7 +290,7 @@ const centerDialogVisible = ref(false);
 const dialogVisible = ref(false);
 const dialogVisible2 = ref(false);
 const formRef = ref(null);
-const formLabelWidth = "100px"; 
+const formLabelWidth = "100px";
 const activeIndex = ref("index");
 const handleSelect = (index) => {
   activeIndex.value = index;
@@ -395,7 +394,7 @@ const saveEdit = () => {
 // 上传成功
 const handleUploadSuccess = (res) => {
   if (res.code === 200) {
-    msgla('图片上传成功'); 
+    msgla('图片上传成功');
 
     // 更新当前数据列的 imgurl 字段
     Atuserinfo.value.imguid = res.data;
@@ -405,16 +404,16 @@ const handleUploadSuccess = (res) => {
       .then((response) => {
         if (response.code === 200) {
           msgla('商品图片已更新成功');
-        } else  if (res.code === 400)  {
-          msgls('图片上传成功，但商品信息更新失败：' , response.msg);
+        } else if (res.code === 400) {
+          msgls('图片上传成功，但商品信息更新失败：', response.msg);
         }
       })
       .catch((error) => {
-        msgls('商品信息更新失败：' , error.message);
+        msgls('商品信息更新失败：', error.message);
         console.error('商品信息更新失败：', error);
       });
-    } else {
-    msgls(res.msg , "error");
+  } else {
+    msgls(res.msg, "error");
   }
 };
 </script>

@@ -16,6 +16,15 @@
                         </el-breadcrumb-item>
                     </el-breadcrumb>
                 </template>
+                <template #content>
+                    <div class="search">
+                        <el-tooltip class="box-item" effect="light" content="刷新" placement="top">
+                            <el-button @click="Reload" class="bg-pink-500" circle><el-icon color="white"
+                                    style="font-size: 20px;">
+                                    <Refresh />
+                                </el-icon></el-button></el-tooltip>
+                    </div>
+                </template>
                 <el-descriptions :column="3" size="small" class="mt-4"></el-descriptions>
             </el-page-header>
             <!-- 页头结束 -->
@@ -221,6 +230,7 @@ const PayOrder = (item) => {
     const orderData = {
         id: item.id,
         payState: 1,
+        money: item.money
     };
 
     // console.log("数据",orderData)
@@ -245,4 +255,8 @@ const PayOrder = (item) => {
             msgla('请求失败，请稍后再试', "error");
         });
 };
+
+const Reload = () => {
+    fetchOrderList();
+}
 </script>

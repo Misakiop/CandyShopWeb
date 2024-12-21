@@ -205,6 +205,7 @@ const RunOrder = (item) => {
     const orderData = {
         id: item.id,
         orderState: 1,
+        money: item.money
     };
 
     // console.log("数据",orderData)

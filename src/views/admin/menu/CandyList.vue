@@ -43,7 +43,7 @@
       <el-row :gutter="20" justify="center">
         <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
           <el-card style="max-width: 400px; max-height: 400px; margin-bottom: 15px;" shadow="hover" @click="routerHand">
-            <el-image :src="item.imguid || 'http://121.40.60.41:8008/1.jpg'" style="width: 100%; height: 200px;">
+            <el-image :src="item.imguid" style="width: 100%; height: 200px;">
               <template #error>
                 <div class="image-slot">
                   <el-icon>
@@ -60,7 +60,7 @@
               </el-text>
 
               <el-tooltip class="box-item" effect="dark" content="编辑" placement="bottom">
-                <el-button circle type="primary" style="margin-left: 110px;" @click="shopEdit(item)">
+                <el-button circle type="primary" style="margin-left: 90px;" @click="shopEdit(item)">
                   <el-icon :size="20">
                     <Edit />
                   </el-icon>
@@ -93,7 +93,7 @@
             <el-text :style="{ color: item.num < 50 ? 'red' : '#6c6e71' }">{{ item.num }}</el-text>
             <div style="display: flex;align-items: flex-start;">
               <el-tag class="bg-pink-500 text-light-600 font-bold" round style="margin-top: 5px;">
-                {{ item.category.name}}
+                {{ item.category.name }}
               </el-tag>
               <el-tag class="font-bold tracking-widest" effect="dark" style="margin-top: 5px;margin-left: 130px;"
                 :type="item.state === 0 ? 'danger' : (item.state === 1 ? 'success' : 'warning')">
@@ -159,7 +159,7 @@
             <el-input v-model="editCandy.storagemethod" type="textarea" placeholder="请输入商品储存方法" />
           </el-form-item>
           <!-- 上传图片开始 -->
-          <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
+          <el-upload action="http://121.40.60.41:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
             :on-success="handleUploadSuccess" :on-error="handleUploadError" :on-exceed="handleExceed"
             :headers="uploadHeaders" :on-preview="handlePictureCardPreview" :on-remove="handleRemove">
             <el-icon>
@@ -228,7 +228,7 @@
           </el-form-item>
           <!-- 上传图片 -->
           <el-form-item label="商品图片" prop="imguid" :label-width="formLabelWidth">
-            <el-upload action="http://localhost:8080/api/file/uploadPicture" :headers="uploadHeaders"
+            <el-upload action="http://121.40.60.41:8080/api/file/uploadPicture" :headers="uploadHeaders"
               list-type="picture-card" :limit="1" :on-success="handleAddUploadSuccess" :on-error="handleAddUploadError"
               :on-exceed="handleAddExceed">
               <el-icon>
@@ -278,7 +278,7 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { getcandy,  updateCandy, addCandy, deleteCandy, reloadCandy, getcandyByWhere, } from "../../../api/manager";
+import { getcandy, updateCandy, addCandy, deleteCandy, reloadCandy, getcandyByWhere, } from "../../../api/manager";
 import { Edit } from '@element-plus/icons-vue';
 import { msgls, msgla } from "../../../composables/util";
 import dayjs from 'dayjs';
@@ -305,7 +305,7 @@ const cateList = ref([]);
 const clicked = ref(false);
 const selectedCategory = ref(null);  // 用于绑定选择器的值
 const filteredCandyList = ref([]);   // 存储过滤后的商品列表
-const selectedCategoryId =ref([])
+const selectedCategoryId = ref([])
 // const state = ref(0);
 
 const newCandy = reactive({
@@ -396,8 +396,6 @@ const EditformRules = {
 };
 
 
-
-
 // 使用 ref 存储上传的 header 信息
 const uploadHeaders = computed(() => {
   return {
@@ -437,56 +435,58 @@ const handleClose = () => {
 }
 
 // 搜索按钮点击事件处理
-const handleSearch = () => {
-  showProgress.value = true;
-  currentPage.value = 1; // 搜索从第一页开始
-  const name = inputsearch.value.trim(); // 获取搜索内容
-  const categoryId = selectedCategoryId.value; // 获取选择的分类ID
-
-  // 调用 API 获取数据
-  fetchCandyList2(currentPage.value, pageSize.value, name, categoryId);
-};
-
-// 获取糖果列表（包括分页和搜索）
-const fetchCandyList2 = (pageNum, pageSize, name, categoryId) => {
-  getcandyByWhere(pageNum, pageSize, name, categoryId)
-    .then((res) => {
-      if (res.data && res.data.pageInfo) {
-        candyList.value = res.data.pageInfo.list || []; // 更新商品列表
-        totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
-      }
-      showProgress.value = false;
-    })
-    .catch((err) => {
-      console.error("查询失败: ", err);
-      showProgress.value = false;
-    });
-};
-
-// // 搜索按钮点击事件处理
 // const handleSearch = () => {
 //   showProgress.value = true;
 //   currentPage.value = 1; // 搜索从第一页开始
 //   const name = inputsearch.value.trim(); // 获取搜索内容
+  // const categoryId = selectedCategoryId.value; // 获取选择的分类ID
 
-//   if (name === "") {
-//     // 如果搜索框为空，显示所有商品
-//     currentPage.value = 1;  // 重置为第一页
-//     fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
-//   }
-//   else {
-//     getcandyByname(currentPage.value, pageSize.value, name)
-//       .then((res) => {
-//         candyList.value = res.data.list || []; // 更新商品列表
-//         totalItems.value = res.data.total || 0; // 更新总记录数
-//         showProgress.value = false;
-//       })
-//       .catch((err) => {
-//         console.error("搜索失败: ", err);
-//         showProgress.value = false;
-//       });
-//   }
+//   // 调用 API 获取数据
+//   fetchCandyList2(currentPage.value, pageSize.value, name, categoryId);
 // };
+
+// 获取糖果列表（包括分页和搜索）
+// const fetchCandyList2 = (pageNum, pageSize, name, categoryId) => {
+//   getcandyByWhere(pageNum, pageSize, name, categoryId)
+//     .then((res) => {
+//       if (res.data && res.data.pageInfo) {
+//         candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+//         totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+//       }
+//       showProgress.value = false;
+//     })
+//     .catch((err) => {
+//       console.error("查询失败: ", err);
+//       showProgress.value = false;
+//     });
+// };
+
+
+
+// // 搜索按钮点击事件处理
+const handleSearch = () => {
+  showProgress.value = true;
+  currentPage.value = 1; // 搜索从第一页开始
+  const name = inputsearch.value.trim(); // 获取搜索内容
+
+  if (name === "") {
+    // 如果搜索框为空，显示所有商品
+    currentPage.value = 1;  // 重置为第一页
+    fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
+  }
+  else {
+    getcandyByname(currentPage.value, pageSize.value, name)
+      .then((res) => {
+        candyList.value = res.data.list || []; // 更新商品列表
+        totalItems.value = res.data.total || 0; // 更新总记录数
+        showProgress.value = false;
+      })
+      .catch((err) => {
+        console.error("搜索失败: ", err);
+        showProgress.value = false;
+      });
+  }
+};
 
 // 分页变化时的处理函数
 const handlePageChange = (page) => {
@@ -650,8 +650,6 @@ const handleAddUploadError = (err) => {
 const handleAddExceed = () => {
   msgls('只能上传一张图片！', "waring");
 };
-
-
 
 //更新商品表图片处理开始-------------------------------
 // 上传成功

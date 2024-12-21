@@ -9,7 +9,6 @@ import WindiCSS from 'vite-plugin-windicss'
 export default defineConfig({
   plugins: [
     vue(),
-    
     AutoImport({
       resolvers: [ElementPlusResolver()],
     }),
@@ -19,4 +18,7 @@ export default defineConfig({
 
     WindiCSS(),
   ],
+  server: {
+    port: 8008
+  }
 });

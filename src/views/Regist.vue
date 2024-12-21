@@ -1,10 +1,10 @@
 <template>
-    <el-row class="min-h-screen bg-indigo-500">
+    <el-row class="min-h-screen bg-pink-300">
       <el-col :lg="16" :md="12" class="flex items-center justify-center">
         <div>
           <div class="font-bold text-5xl text-light-50 mb-4">欢迎光临</div>
           <div class="text-gray-200 text-sm">
-            演示登录页面,演示登录页面,演示登录页面,演示登录页面,演示登录页面,演示登录页面
+            注册页面
           </div>
         </div>
       </el-col>
@@ -50,7 +50,7 @@
           <el-form-item>
             <el-button
               round
-              color="#626aef"
+              color="#edacd2"
               class="w-[250px]"
               type="primary"
               @click="onSubmit"

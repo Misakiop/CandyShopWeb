@@ -36,7 +36,7 @@
                 <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
                     <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="AddCart(item)">
                         <!-- 使用动态绑定的图片 -->
-                        <el-image :src="item.imguid || 'http://121.40.60.41:8008/1.jpg'"
+                        <el-image :src="item.imguid"
                             style="width: 100%; height: 200px;">
                             <template #error>
                                 <div class="image-slot">
@@ -58,7 +58,7 @@
                             <el-badge :value="getCartItemQuantity(item.id)" class="item" :show-zero="false"
                                 :offset="[1, 2]">
                                 <el-tooltip effect="dark" content="加入购物车" placement="bottom">
-                                    <el-button circle color="#f1a03a" size="large" style="margin-left: 130px;"
+                                    <el-button circle color="#f1a03a" size="large" style="margin-left: 120px;"
                                         @click.stop="FastSaveCart(item)">
                                         <el-icon :size="25" style="margin-left: -1px; margin-top: 3px; color: white;" class="font-extrabold">
                                             <ShoppingCart />
@@ -328,13 +328,10 @@ const getCartItemQuantity = computed(() => (itemId) => {
     return cartItem ? cartItem.buyNum : 0;
 });
 
-
-
 //标签关闭
 const handleClose = () => {
     router.push('index');
 }
-
 
 // 搜索按钮点击事件处理
 const handleSearch = () => {

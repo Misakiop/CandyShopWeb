@@ -161,12 +161,8 @@
             </el-dialog>
             <!-- 订单确认页面结束 -->
 
-
-
-
             <!-- 回到顶部 -->
             <el-backtop :right="100" :bottom="100" />
-
         </div>
     </el-row>
 </template>
@@ -197,8 +193,6 @@ const tags = ref([
     { type: 'warning' },
     { type: 'danger' },
 ])
-
-
 
 // 获取随机标签类型的方法
 const getRandomTagType = () => {
@@ -242,7 +236,6 @@ const fetchCartList = (pageNum, pageSize) => {
 
 };
 
-
 // 删除购物车中的指定商品
 const deleteCart = (item) => {
     console.log("Item to delete: ", item);  // 打印删除的商品数据
@@ -276,8 +269,6 @@ const deleteCart = (item) => {
         });
 };
 
-
-
 // 选择变化的处理函数
 const handleCartChange = (selection) => {
     selectedItems.value = selection; // 更新选中的商品列表
@@ -294,21 +285,15 @@ const totalAmount = computed(() => {
   }, 0).toFixed(2); // 确保金额保留两位小数
 });
 
-// const money = computed(() => {
-//     return (AddCartCandy.value.price * buyNum.value);
-// });
-
 //标签关闭
 const handleClose = () => {
     router.push('index');
 }
 
-
 // 返回按钮点击事件处理
 const onBack = () => {
     router.push('index');
 };
-
 
 //购买数量计数
 const NumChange = (value) => {
@@ -324,34 +309,39 @@ const AddToOrder = () => {
         if (!valid) {
             return false; // 如果表单验证不通过，则阻止提交
         }
-        const orderdata = toRaw(Atuserinfo.value)
-        // console.log("数据orderdata:", orderdata);
 
+        const orderdata = toRaw(Atuserinfo.value);
+        // 构建订单数据
         const order = {
             receiverName: orderdata.username,
             receiverPhone: orderdata.telephone,
             receiverAddress: orderdata.address
         };
 
-        // console.log("数据orderdata:", order);
-
+        // 发起创建订单请求
         createOrder(order)
-            .then(() => {
-                if(res.code === 200){
-                    msgla(res.msg)
-                    diaOrder.value = false;
-                }if(res.code === 401){
-                    msgla(res.msg,"error")
-                }if(res.code === 402){
-                    msgla(res.msg,"error")
+            .then((res) => {
+                // 根据返回的状态码处理逻辑
+                if (res.code === 200) {
+                    msgla(res.data); // 提示用户成功消息
+                    diaOrder.value = false; // 关闭订单弹窗
+                    router.push("/user/orderlistu");
+                } else if (res.code === 401) {
+                    msgla(res.msg, "error"); // 提示用户失败消息
+                } else if (res.code === 402) {
+                    msgla(res.msg, "error"); // 提示库存不足
+                }  else if (res.code === 403) {
+                    msgla(res.msg, "info"); 
+                } else {
+                    msgla('未知错误', "error"); // 提示未知错误
                 }
             })
             .catch((err) => {
-            msgla(err.message, "error");
-        });
-
+                msgla(err.message, "error"); // 请求失败时，显示错误消息
+            });
     });
 };
+
 
 </script>
 

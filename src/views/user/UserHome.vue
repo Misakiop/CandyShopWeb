@@ -6,7 +6,8 @@
                 <el-menu router :default-active="activeIndex" class="el-menu-demo" mode="horizontal" :ellipsis="false"
                     @select="handleSelect">
                     <el-menu-item index="0">
-                        <img style="width: 60px; height: 60;margin-left: 20px;" src="/src/static/icon/candy.png"
+                        <img style="width: 60px; height: 60;margin-left: 20px;"
+                            :src="'http://121.40.60.41:8008/a6da186b-6afd-4959-83ce-7f6b0dc1e935.png'"
                             alt="Element logo" />
                     </el-menu-item>
                     <div style="position: absolute; right: 0; margin-top: 3px; margin-right: 20px;">
@@ -243,7 +244,7 @@
                     </el-form-item>
                     <!-- 上传图片开始 -->
                     <div style="margin-left: 40px;">
-                        <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card"
+                        <el-upload action="http://121.40.60.41:8080/api/file/uploadPicture" list-type="picture-card"
                             :limit="1" :on-success="handleUploadSuccess" :on-error="handleUploadError"
                             :on-exceed="handleExceed" :headers="uploadHeaders" :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove">
@@ -376,11 +377,12 @@ const saveEdit = () => {
             updateUserInfo(Atuserinfo.value).then(() => {
                 msgla("用户信息更新成功");
                 closeDialog();
-                // 更新本地 candyList 数据
-                const index = Atuserinfo.value.findIndex(Atuserinfo => Atuserinfo.id === Atuserinfo.value.id);
-                if (index !== -1) {
-                    Atuserinfo.value.splice(index, 1, { ...formattedCandy });
-                }
+                // 更新本地数据
+
+                // const index = Atuserinfo.value.findIndex(Atuserinfo => Atuserinfo.id === Atuserinfo.value.id);
+                // if (index !== -1) {
+                //     Atuserinfo.value.splice(index, 1, { ...formattedCandy });
+                // }
             }).catch(err => {
                 // msgls('用户信息更新失败: ' + err.message, "error");
                 console.log(err.message)

@@ -1,10 +1,10 @@
 <template>
-  <el-row class="min-h-screen bg-indigo-500">
+  <el-row class="min-h-screen bg-pink-300">
     <el-col :lg="16" :md="12" class="flex items-center justify-center">
       <div>
         <div class="font-bold text-5xl text-light-50 mb-4">欢迎光临</div>
         <div class="text-gray-200 text-sm">
-          演示登录页面,演示登录页面,演示登录页面,演示登录页面,演示登录页面,演示登录页面
+          网上糖果商城登录页面
         </div>
       </div>
     </el-col>
@@ -37,12 +37,12 @@
           </el-input>
         </el-form-item>
         <el-form-item>
-          <el-button round color="#626aef" class="w-[250px]" type="primary" @click="onSubmit"
+          <el-button round color="#edacd2" class="w-[250px]" type="primary" @click="onSubmit"
             :loading="loading">登录</el-button>
         </el-form-item>
         <div>
-          <el-link type="primary" href="https://element-plus.org" class="text-indigo-500"
-            style="vertical-align: text-bottom;">忘记密码?</el-link>
+          <!-- <el-link type="primary" href="https://element-plus.org" class="text-indigo-500"
+            style="vertical-align: text-bottom;">忘记密码?</el-link> -->
           <el-link type="primary" href="/regist" class="text-indigo-500"
             style="vertical-align: text-bottom;margin-left: 130px;">注册用户</el-link>
         </div>
@@ -137,7 +137,7 @@ const onSubmit = () => {
           console.error("Token not found in response data");
         }
 
-        // 路由跳转
+        
         const roleList = res.data.roleList && Array.isArray(res.data.roleList) ? res.data.roleList : [];
         const firstRole = roleList[0];
 
