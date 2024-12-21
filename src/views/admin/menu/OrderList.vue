@@ -15,6 +15,16 @@
                             <el-tag type="success" closable @close="handleClose(tag)">我的订单</el-tag>
                         </el-breadcrumb-item>
                     </el-breadcrumb>
+
+                </template>
+                <template #content>
+                    <div class="search">
+                        <el-tooltip class="box-item" effect="light" content="刷新" placement="top">
+                            <el-button @click="Reload" class="bg-pink-500" circle><el-icon color="white"
+                                    style="font-size: 20px;">
+                                    <Refresh />
+                                </el-icon></el-button></el-tooltip>
+                    </div>
                 </template>
                 <el-descriptions :column="3" size="small" class="mt-4"></el-descriptions>
             </el-page-header>
@@ -89,30 +99,40 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column label="支付" width="80">
+                    <el-table-column label="操作" width="80">
                         <template #default="scope">
-                            <el-tooltip class="box-item" effect="light" content="支付" placement="top">
-                                <el-button type="danger" circle @click="PayOrder(scope.row)">
-                                    <el-icon size="large">
-                                        <WalletFilled />
+                            <el-tooltip class="box-item" effect="light" content="发货" placement="top">
+                                <el-button class="bg-pink-500" circle @click="RunOrder(scope.row)">
+                                    <el-icon color="white" size="large">
+                                        <Promotion />
                                     </el-icon>
                                 </el-button>
                             </el-tooltip>
                         </template>
                     </el-table-column>
 
-
+                    <el-table-column width="80">
+                        <template #default="scope">
+                            <el-tooltip class="box-item" effect="light" content="删除" placement="top">
+                                <el-button type="warning" circle @click="DelOrder(scope.row)">
+                                    <el-icon size="large">
+                                        <Delete />
+                                    </el-icon>
+                                </el-button>
+                            </el-tooltip>
+                        </template>
+                    </el-table-column>
                 </el-table>
             </div>
             <!-- 订单结束 -->
 
             <!-- 页码开始 -->
-            <!-- <el-footer>
+            <el-footer>
                 <div style="display: flex; justify-content: center;">
                     <el-pagination background layout="prev, pager, next" :total="totalItems" :current-page="currentPage"
                         :page-size="pageSize" @update:current-page="handlePageChange" />
                 </div>
-            </el-footer> -->
+            </el-footer>
             <!-- 页码结束 -->
 
         </div>
@@ -120,9 +140,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, } from 'vue';
 import { useRouter } from 'vue-router';
-import { getOrderById, updateOrder } from "../../../api/manager";
+import { deleteOrder, getAllOrders, updateOrder, } from "../../../api/manager";
 import { msgla } from "../../../composables/util";
 
 const router = useRouter();
@@ -131,71 +151,36 @@ const showProgress = ref(true);
 const totalItems = ref(0);  // 总订单数量
 const currentPage = ref(1);  // 当前页
 const pageSize = ref(10);  // 每页订单数量
+const currentItemToDelete = ref(null); // 当前待删除商品
 
 
-
-// 使用 ref 创建响应式对象
-// const Atuserinfo = ref({});
 
 // 组件挂载后执行的函数
 onMounted(() => {
     fetchOrderList(currentPage.value, pageSize.value);
 
-    // const AtuserinfoStr = sessionStorage.getItem("Atuserinfo");
-    // if (AtuserinfoStr) {
-    //     try {
-    //         const user = JSON.parse(AtuserinfoStr);
-    //         Atuserinfo.value = user; // 更新响应式数据
-    //     } catch (error) {
-    //         console.error("无法从 sessionStorage 解析 Atuserinfo：", error);
-    //     }
-    // }
 });
 
 // 获取订单列表数据
 const fetchOrderList = (pageNum, pageSize) => {
     showProgress.value = true;
 
-    // 获取 sessionStorage 中的数据
-    const AtuserinfoStr = sessionStorage.getItem("Atuserinfo");
-
-    if (AtuserinfoStr) {
-        try {
-            // 解析存储的 JSON 字符串
-            const Atuserinfo = JSON.parse(AtuserinfoStr);
-
-            // 检查是否存在有效的用户 ID
-            const id = Atuserinfo.id;
-
-            if (!id) {
-                console.error("未找到有效的用户 ID");
-                showProgress.value = false;
-                return;
-            }
-
-            // 获取订单数据，传递分页参数
-            getOrderById(id, pageNum, pageSize)  // 将 pageNum 和 pageSize 传递给后端
-                .then((res) => {
-                    orderList.value = res.data.list;  // 更新订单列表
-                    totalItems.value = res.data.total;  // 更新总条目数
-                    showProgress.value = false;
-                })
-                .catch((err) => {
-                    console.error(err);
-                    showProgress.value = false;
-                });
-
-            // console.log("Current Page: ", pageNum);
-            // console.log("Page Size: ", pageSize);
-
-        } catch (error) {
-            console.error("无法解析 sessionStorage 中的 Atuserinfo 数据", error);
+    // 获取订单数据
+    getAllOrders(pageNum, pageSize)
+        .then((res) => {
+            orderList.value = res.data.list;
+            totalItems.value = res.data.total;
             showProgress.value = false;
-        }
-    } else {
-        console.warn("sessionStorage 中没有找到 Atuserinfo 数据");
-        showProgress.value = false;
-    }
+
+            console.log(orderList.value)
+        })
+        .catch((err) => {
+            console.error(err);
+            showProgress.value = false;
+        });
+
+    // console.log("Current Page: ", pageNum);
+    // console.log("Page Size: ", pageSize);
 };
 
 
@@ -215,12 +200,11 @@ const onBack = () => {
     router.push('index');
 };
 
-
-
-const PayOrder = (item) => {
+//发货
+const RunOrder = (item) => {
     const orderData = {
         id: item.id,
-        payState: 1,
+        orderState: 1,
     };
 
     // console.log("数据",orderData)
@@ -229,12 +213,12 @@ const PayOrder = (item) => {
         .then((res) => {
             if (res.code === 200) {
                 console.log("状态码:", res.code, "提示:", res.msg);
-                msgla('商品支付成功');
+                msgla('商品发货成功');
                 fetchOrderList();
             } else if (res.code === 400) {
                 console.log("状态码:", res.code, "提示:", res.msg);
                 console.error('服务器未返回有效数据:', res);
-                msgla('支付失败', "error");
+                msgla('发货失败', "error");
             } else {
                 console.error("未处理的响应码:", res.code);
                 msgla('未知错误', "error");
@@ -245,4 +229,37 @@ const PayOrder = (item) => {
             msgla('请求失败，请稍后再试', "error");
         });
 };
+
+//删除订单
+// 删除商品
+const DelOrder = (item) => {
+    currentItemToDelete.value = item;
+    if (!currentItemToDelete.value) {
+        msgla("待删除商品信息不存在");
+        return;
+    }
+
+    deleteOrder(currentItemToDelete.value.id)
+        .then((res) => {
+            if (res.code === 200) {
+                msgla("商品删除成功");
+
+                // 从商品列表移除
+                const index = orderList.value.findIndex((order) => order.id === currentItemToDelete.value.id);
+                if (index !== -1) {
+                    orderList.value.splice(index, 1);
+                }
+                currentItemToDelete.value = null; // 清空待删除商品
+            } else {
+                msgls("删除失败: " + res.msg);
+            }
+        })
+        .catch((err) => {
+            msgls("删除失败: " + err.message);
+        });
+};
+
+const Reload = () => {
+    fetchOrderList();
+}
 </script>

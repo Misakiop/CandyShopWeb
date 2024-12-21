@@ -88,7 +88,8 @@ const rules = {
   password: [
     {
       required: true,
-      message: "密码不能为空",
+      min: 6,
+      message: "密码长度至少为 6 个字符",
       trigger: "blur",
     },
   ],

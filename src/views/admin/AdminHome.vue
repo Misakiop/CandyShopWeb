@@ -1,16 +1,14 @@
 <template>
-  <div class="common-layout">
+  <div class="common-layout" style="background-color: #efedf1;">
     <el-container>
       <!-- 顶栏 -->
       <el-header>
         <el-menu router :default-active="activeIndex" class="el-menu-demo" mode="horizontal" :ellipsis="false"
-          @select="handleSelect">
+          @select="handleSelect" style="background-color: #efedf1;">
           <el-menu-item index="0">
             <img style="width: 60px; height: 60; margin-left: 20px" src="/src/static/icon/candy.png"
               alt="Element logo" />
           </el-menu-item>
-          <el-text class="text-xl" style="margin-left: 5%">欢迎您:&nbsp;&nbsp;{{ Atuserinfo.username }}</el-text>
-
           <div style="
               position: absolute;
               right: 0;
@@ -71,7 +69,7 @@
               <div class="flex items-center justify-center">
                 <h2 class="text-2xl text-gray-600">商城管理员后台</h2>
               </div>
-              <el-menu router class="el-menu-vertical-demo">
+              <el-menu router class="el-menu-vertical-demo" style="background-color: #efedf1;">
                 <el-menu-item index="index">
                   <el-icon>
                     <HomeFilled />
@@ -90,23 +88,19 @@
                   </el-icon>
                   <span>用户管理</span>
                 </el-menu-item>
-                <el-sub-menu index="3">
-                  <template #title>
-                    <el-icon>
-                      <Shop />
-                    </el-icon>
-                    <span>订单管理</span>
-                  </template>
-                  <el-menu-item index="1-1">商品列表</el-menu-item>
-                  <el-menu-item index="1-2">管理商品</el-menu-item>
-                </el-sub-menu>
+                <el-menu-item index="orderlist">
+                  <el-icon>
+                    <List />
+                  </el-icon>
+                  <span>订单管理</span>
+                </el-menu-item>
               </el-menu>
             </el-col>
           </el-row>
         </el-aside>
 
         <el-container>
-          <el-main style="height: 100%">
+          <el-main style="height: 100%;">
             <router-view></router-view>
             <!-- 这里将渲染子路由组件 -->
           </el-main>
@@ -134,7 +128,7 @@
           <el-descriptions-item label="用户名">
             <template #label>
               <div class="cell-item">
-                <el-icon :style="iconStyle">
+                <el-icon>
                   <user />
                 </el-icon>
                 <P style="margin-left: 3px;">用户名</P>
@@ -257,9 +251,24 @@
           <el-form-item label="地址" :label-width="formLabelWidth">
             <el-input v-model="Atuserinfo.address" type="textarea" autocomplete="off" />
           </el-form-item>
+          <!-- 上传图片开始 -->
+          <div style="margin-left: 40px;">
+            <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
+              :on-success="handleUploadSuccess" :on-error="handleUploadError" :on-exceed="handleExceed"
+              :headers="uploadHeaders" :on-preview="handlePictureCardPreview" :on-remove="handleRemove">
+              <el-icon>
+                <Plus />
+              </el-icon>
+            </el-upload>
+            <el-dialog v-model="dialogVisibleimg">
+              <img w-full :src="dialogImageUrl" alt="Preview Image" />
+            </el-dialog>
+          </div>
+          <!-- 上传图片结束 -->
         </el-form>
+
         <template #footer>
-          <span class="dialog-footer">
+          <span>
             <el-button @click="closeDialog">取消</el-button>
             <el-button type="primary" @click="saveEdit"> 确认 </el-button>
           </span>
@@ -272,8 +281,8 @@
 
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { removeToken } from "../../composables/auth";
+import { ref, onMounted, computed } from "vue";
+import { getToken, removeToken } from "../../composables/auth";
 import { useRouter } from "vue-router";
 import { deleteUser, updateUserInfo } from "../../api/manager";
 import { msgla, msgls } from "../../composables/util";
@@ -282,8 +291,7 @@ const centerDialogVisible = ref(false);
 const dialogVisible = ref(false);
 const dialogVisible2 = ref(false);
 const formRef = ref(null);
-const formLabelWidth = "100px"; // 添加标签宽度，确保一致
-
+const formLabelWidth = "100px"; 
 const activeIndex = ref("index");
 const handleSelect = (index) => {
   activeIndex.value = index;
@@ -303,6 +311,13 @@ onMounted(() => {
       console.error("无法从 sessionStorage 解析 Atuserinfo：", error);
     }
   }
+});
+
+// 使用 ref 存储上传的 header 信息
+const uploadHeaders = computed(() => {
+  return {
+    Authorization: `Bearer ${getToken()}`
+  };
 });
 
 // 获取 router 实例
@@ -375,6 +390,38 @@ const saveEdit = () => {
     }
   });
 };
+
+//更新商品表图片处理开始-------------------------------
+// 上传成功
+const handleUploadSuccess = (res) => {
+  if (res.code === 200) {
+    msgla('图片上传成功'); 
+
+    // 更新当前数据列的 imgurl 字段
+    Atuserinfo.value.imguid = res.data;
+
+    // 自动发起 updateCandy 请求
+    updateUserInfo(Atuserinfo.value)
+      .then((response) => {
+        if (response.code === 200) {
+          msgla('商品图片已更新成功');
+        } else  if (res.code === 400)  {
+          msgls('图片上传成功，但商品信息更新失败：' , response.msg);
+        }
+      })
+      .catch((error) => {
+        msgls('商品信息更新失败：' , error.message);
+        console.error('商品信息更新失败：', error);
+      });
+    } else {
+    msgls(res.msg , "error");
+  }
+};
 </script>
 
-<style scoped></style>
+<style scoped>
+.cell-item {
+  display: flex;
+  align-items: center;
+}
+</style>

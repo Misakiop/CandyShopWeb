@@ -7,10 +7,12 @@ import Login from '../views/Login.vue'
 import Regist from "../views/Regist.vue";
 import Index from '../views/admin/menu/index.vue'
 
+import Test from '../views/Test.vue'
 // 管理员
 import Adminhome from '../views/admin/AdminHome.vue';
 import CandyList from "../views/admin/menu/CandyList.vue";
 import UserList from "../views/admin/menu/UserList.vue";
+import OrderList from "../views/admin/menu/OrderList.vue";
 
 // 用户
 import UserHome from "../views/user/UserHome.vue";
@@ -39,6 +41,11 @@ const routes = [
                 path:'userlist',
                 meta:{title:"用户列表"},
                 component: UserList
+            },
+            {
+                path: 'orderlist', 
+                meta: { title: "订单列表" },
+                component: OrderList
             },
         ]
     },
@@ -94,6 +101,11 @@ const routes = [
         path: '/403',
         meta: { title: "没有权限" },
         component: Forbidden
+    },
+    {
+        path: '/test',
+        meta: { title: "没有权限" },
+        component: Test
     },
 ];
 

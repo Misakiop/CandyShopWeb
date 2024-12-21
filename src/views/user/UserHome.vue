@@ -9,9 +9,6 @@
                         <img style="width: 60px; height: 60;margin-left: 20px;" src="/src/static/icon/candy.png"
                             alt="Element logo" />
                     </el-menu-item>
-                    <el-text class="text-xl" style="margin-left: 5%;">欢迎您:&nbsp;&nbsp;{{ Atuserinfo.username
-                        }}</el-text>
-
                     <div style="position: absolute; right: 0; margin-top: 3px; margin-right: 20px;">
                         <el-popover :width="300"
                             popper-style="box-shadow: rgb(14 18 22 / 35%) 0px 10px 38px -10px, rgb(14 18 22 / 20%) 0px 10px 20px -15px; padding: 20px;">
@@ -59,7 +56,7 @@
                             <div class="flex items-center justify-center">
                                 <h2 class="text-2xl text-gray-600">网上糖果商城</h2>
                             </div>
-                            <el-menu router :default-active="index" class="el-menu-vertical-demo">
+                            <el-menu router>
                                 <el-menu-item index='index'>
                                     <el-icon>
                                         <House />
@@ -113,7 +110,7 @@
             <!-- 注销弹出框结束 -->
 
             <!-- 用户详细开始 -->
-            <el-dialog v-model="dialogVisible2"  width="800px">
+            <el-dialog v-model="dialogVisible2" width="800px">
                 <el-descriptions title="个人详细信息" direction="vertical" border>
                     <el-descriptions-item :rowspan="2" :width="140" label="Photo" align="center">
                         <el-image style="width: 100px; height: 100px" :src=Atuserinfo.imguid />
@@ -244,9 +241,25 @@
                     <el-form-item label="地址" :label-width="formLabelWidth">
                         <el-input v-model="Atuserinfo.address" type="textarea" autocomplete="off" />
                     </el-form-item>
+                    <!-- 上传图片开始 -->
+                    <div style="margin-left: 40px;">
+                        <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card"
+                            :limit="1" :on-success="handleUploadSuccess" :on-error="handleUploadError"
+                            :on-exceed="handleExceed" :headers="uploadHeaders" :on-preview="handlePictureCardPreview"
+                            :on-remove="handleRemove">
+                            <el-icon>
+                                <Plus />
+                            </el-icon>
+                        </el-upload>
+                        <el-dialog v-model="dialogVisibleimg">
+                            <img w-full :src="dialogImageUrl" alt="Preview Image" />
+                        </el-dialog>
+                    </div>
+                    <!-- 上传图片结束 -->
                 </el-form>
+
                 <template #footer>
-                    <span class="dialog-footer">
+                    <span>
                         <el-button @click="closeDialog">取消</el-button>
                         <el-button type="primary" @click="saveEdit">
                             确认
@@ -262,8 +275,8 @@
 
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { removeToken } from '../../composables/auth';
+import { ref, onMounted, computed } from 'vue';
+import { getToken, removeToken } from '../../composables/auth';
 import { useRouter } from "vue-router";
 import { deleteUser, updateUserInfo } from '../../api/manager';
 import { msgla, msgls } from '../../composables/util';
@@ -273,7 +286,6 @@ const dialogVisible = ref(false);
 const dialogVisible2 = ref(false);
 const formRef = ref(null);
 const formLabelWidth = '100px'; // 添加标签宽度，确保一致
-
 const activeIndex = ref("index");
 const handleSelect = (index) => {
     activeIndex.value = index;
@@ -293,6 +305,13 @@ onMounted(() => {
             console.error('无法从 sessionStorage 解析 Atuserinfo：', error);
         }
     }
+});
+
+// 使用 ref 存储上传的 header 信息
+const uploadHeaders = computed(() => {
+    return {
+        Authorization: `Bearer ${getToken()}`
+    };
 });
 
 // 获取 router 实例
@@ -357,11 +376,43 @@ const saveEdit = () => {
             updateUserInfo(Atuserinfo.value).then(() => {
                 msgla("用户信息更新成功");
                 closeDialog();
+                // 更新本地 candyList 数据
+                const index = Atuserinfo.value.findIndex(Atuserinfo => Atuserinfo.id === Atuserinfo.value.id);
+                if (index !== -1) {
+                    Atuserinfo.value.splice(index, 1, { ...formattedCandy });
+                }
             }).catch(err => {
-                msgls('用户信息更新失败: ' + err.message, "error");
+                // msgls('用户信息更新失败: ' + err.message, "error");
+                console.log(err.message)
             });
         }
     });
+};
+//更新商品表图片处理开始-------------------------------
+// 上传成功
+const handleUploadSuccess = (res) => {
+    if (res.code === 200) {
+        msgla('图片上传成功');
+
+        // 更新当前数据列的 imgurl 字段
+        Atuserinfo.value.imguid = res.data;
+
+        // 自动发起 updateCandy 请求
+        updateUserInfo(Atuserinfo.value)
+            .then((response) => {
+                if (response.code === 200) {
+                    msgla('商品图片已更新成功');
+                } else if (res.code === 400) {
+                    msgls('图片上传成功，但商品信息更新失败：', response.msg);
+                }
+            })
+            .catch((error) => {
+                msgls('商品信息更新失败：', error.message);
+                console.error('商品信息更新失败：', error);
+            });
+    } else {
+        msgls(res.msg, "error");
+    }
 };
 </script>
 

@@ -18,11 +18,20 @@
       </template>
       <template #content>
         <div class="search">
-          <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" />
+          <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" clearable />
           <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-tooltip class="box-item" effect="dark" content="添加商品" placement="right">
-            <el-button type="warning" @click="openAddDialog" circle><el-icon style="font-size: 40px;">
+          <el-select clearable v-model="candyList" value-key="id" filter-method="handleSearch"
+            @change="onCategoryChange" placeholder="糖果类型" style="width: 140px;margin-left: 20px;">
+            <el-option v-for="item in cateList" :key="item.id" :label="item.name" :value="item" />
+          </el-select>
+          <el-tooltip class="box-item" effect="light" content="添加商品" placement="top">
+            <el-button style="margin-left: 20PX;" color="pink" @click="openAddDialog" circle><el-icon color="white"
+                style="font-size: 40px;">
                 <CirclePlus />
+              </el-icon></el-button></el-tooltip>
+          <el-tooltip class="box-item" effect="light" content="刷新缓存" placement="top">
+            <el-button @click="Reload" color="pink" circle><el-icon color="white" style="font-size: 20px;">
+                <Refresh />
               </el-icon></el-button></el-tooltip>
         </div>
       </template>
@@ -33,7 +42,7 @@
     <div id="car-candylist">
       <el-row :gutter="20" justify="center">
         <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
-          <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="routerHand">
+          <el-card style="max-width: 400px; max-height: 400px; margin-bottom: 15px;" shadow="hover" @click="routerHand">
             <el-image :src="item.imguid || 'http://121.40.60.41:8008/1.jpg'" style="width: 100%; height: 200px;">
               <template #error>
                 <div class="image-slot">
@@ -51,7 +60,7 @@
               </el-text>
 
               <el-tooltip class="box-item" effect="dark" content="编辑" placement="bottom">
-                <el-button circle type="primary" style="margin-left: 90px;" @click="shopEdit(item)">
+                <el-button circle type="primary" style="margin-left: 110px;" @click="shopEdit(item)">
                   <el-icon :size="20">
                     <Edit />
                   </el-icon>
@@ -63,6 +72,7 @@
                   <Delete />
                 </el-icon>
               </el-button> -->
+
               <el-popconfirm width="220" :icon="InfoFilled" icon-color="#ff4d4d" title="确定删除商品?" @cancel="onCancel">
                 <template #reference>
                   <el-button color="red" circle type="primary">
@@ -81,11 +91,15 @@
             </div>
             <el-text>库存：</el-text>
             <el-text :style="{ color: item.num < 50 ? 'red' : '#6c6e71' }">{{ item.num }}</el-text>
-
-            <!-- <el-switch v-model="item.state" size="large" inline-prompt
-              style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949; margin-left: 100px;"
-              active-text="上架" inactive-text="下架" active-value="1" inactive-value="0"  @change="updateCandyState"/> -->
-
+            <div style="display: flex;align-items: flex-start;">
+              <el-tag class="bg-pink-500 text-light-600 font-bold" round style="margin-top: 5px;">
+                {{ item.category.name}}
+              </el-tag>
+              <el-tag class="font-bold tracking-widest" effect="dark" style="margin-top: 5px;margin-left: 130px;"
+                :type="item.state === 0 ? 'danger' : (item.state === 1 ? 'success' : 'warning')">
+                {{ item.state === 0 ? '下架' : (item.state === 1 ? '上架' : '缺货') }}
+              </el-tag>
+            </div>
           </el-card>
         </el-col>
       </el-row>
@@ -94,7 +108,7 @@
 
     <!-- 商品修改开始 -->
     <el-dialog v-model="dialogVisible" title="编辑商品信息" width="800">
-      <el-form :model="editCandy" ref="formRef" style="display: flex;
+      <el-form :model="editCandy" ref="formRef" :rules="EditformRules" style="display: flex;
     align-items: flex-start;">
         <!-- <el-form-item label="商品ID" :label-width="formLabelWidth">
           <el-input v-model="editCandy.id" autocomplete="off"/>
@@ -106,14 +120,23 @@
           <el-form-item label="介绍" :label-width="formLabelWidth">
             <el-input v-model="editCandy.comment" type="textarea" autocomplete="off" placeholder="请输入商品描述" />
           </el-form-item>
-          <el-form-item label="类型" :label-width="formLabelWidth">
-            <el-input v-model="editCandy.category" autocomplete="off" placeholder="请输入商品类型" />
+          <el-form-item label="类型" prop="category" :label-width="formLabelWidth">
+            <el-select v-model="editCandy.category" value-key="id" placeholder="Select" style="width: 240px">
+              <el-option v-for="item in cateList" :key="item.id" :label="item.name" :value="item" />
+            </el-select>
           </el-form-item>
           <el-form-item label="价格" :label-width="formLabelWidth">
             <el-input v-model="editCandy.price" autocomplete="off" placeholder="请输入商品价格(格式00.00)" />
           </el-form-item>
           <el-form-item label="库存" prop="num" :label-width="formLabelWidth">
             <el-input v-model="editCandy.num" type="number" placeholder="请输入商品库存(整数)" />
+          </el-form-item>
+          <el-form-item label="状态" prop="state" :label-width="formLabelWidth" style="max-width: 400px;">
+            <el-radio-group v-model="editCandy.state">
+              <el-radio value="1" size="large">上架</el-radio>
+              <el-radio value="0" size="large">下架</el-radio>
+              <!-- <el-radio value="2" size="large">缺货</el-radio> -->
+            </el-radio-group>
           </el-form-item>
           <el-form-item label="克重/份" prop="kgs" :label-width="formLabelWidth" style="max-width: 400px;">
             <el-input v-model="editCandy.kgs" type="number" placeholder="请输入商品克重(整数)" />
@@ -124,24 +147,21 @@
           <el-form-item label="保质期/天" prop="expirationdate" :label-width="formLabelWidth" style="max-width: 400px;">
             <el-input v-model="editCandy.expirationdate" type="number" placeholder="请输入商品保质期(整数)" />
           </el-form-item>
+        </div>
+        <div style="margin-left: 8%;">
           <el-form-item label="添加时间" prop="addtime" :label-width="formLabelWidth">
             <el-date-picker v-model="editCandy.addtime" type="datetime" placeholder="请输入商品添加时间" autocomplete="off" />
           </el-form-item>
-        </div>
-        <!-- <el-form-item label="状态" :label-width="formLabelWidth">
-          <el-input v-model="editCandy.state" autocomplete="off" />
-        </el-form-item> -->
-        <!-- 上传图片开始 -->
-        <div style="margin-left: 8%;">
           <el-form-item label="生成日期" :label-width="formLabelWidth">
             <el-date-picker v-model="editCandy.creationdate" type="date" placeholder="请输入商品生产日期" autocomplete="off" />
           </el-form-item>
           <el-form-item label="储存方法" prop="storagemethod" :label-width="formLabelWidth">
             <el-input v-model="editCandy.storagemethod" type="textarea" placeholder="请输入商品储存方法" />
           </el-form-item>
+          <!-- 上传图片开始 -->
           <el-upload action="http://localhost:8080/api/file/uploadPicture" list-type="picture-card" :limit="1"
             :on-success="handleUploadSuccess" :on-error="handleUploadError" :on-exceed="handleExceed"
-            :on-preview="handlePictureCardPreview" :on-remove="handleRemove">
+            :headers="uploadHeaders" :on-preview="handlePictureCardPreview" :on-remove="handleRemove">
             <el-icon>
               <Plus />
             </el-icon>
@@ -166,7 +186,7 @@
 
     <!-- 商品添加开始 -->
     <el-dialog v-model="addDialogVisible" title="添加商品" width="800">
-      <el-form :model="newCandy" ref="addFormRef" style="display: flex;
+      <el-form :model="newCandy" ref="addFormRef" :rules="AddformRules" style="display: flex;
     align-items: flex-start;">
         <!-- <el-form-item label="商品ID" :label-width="formLabelWidth">
           <el-input v-model="newCandy.id" autocomplete="off" placeholder="请输入商品ID" />
@@ -179,7 +199,9 @@
             <el-input v-model="newCandy.comment" type="textarea" placeholder="请输入商品描述" />
           </el-form-item>
           <el-form-item label="类型" prop="category" :label-width="formLabelWidth">
-            <el-input v-model="newCandy.category" placeholder="请输入商品类型" />
+            <el-select v-model="newCandy.category" value-key="id" placeholder="糖果类型" style="width: 240px">
+              <el-option v-for="item in cateList" :key="item.id" :label="item.name" :value="item" />
+            </el-select>
           </el-form-item>
           <el-form-item label="价格" prop="price" :label-width="formLabelWidth">
             <el-input v-model="newCandy.price" type="number" placeholder="请输入商品价格(格式00.00)" />
@@ -254,9 +276,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { getcandy, getcandyByname, updateCandy, addCandy, deleteCandy, } from "../../../api/manager";
+import { getcandy,  updateCandy, addCandy, deleteCandy, reloadCandy, getcandyByWhere, } from "../../../api/manager";
 import { Edit } from '@element-plus/icons-vue';
 import { msgls, msgla } from "../../../composables/util";
 import dayjs from 'dayjs';
@@ -277,8 +299,13 @@ const formLabelWidth = null;
 const dialogImageUrl = ref('')
 const addFormRef = ref(null);
 const addDialogVisible = ref(false);
-const deCandyDialogVisible = ref(false)
+const deCandyDialogVisible = ref(false);
 const currentItemToDelete = ref(null); // 当前待删除商品
+const cateList = ref([]);
+const clicked = ref(false);
+const selectedCategory = ref(null);  // 用于绑定选择器的值
+const filteredCandyList = ref([]);   // 存储过滤后的商品列表
+const selectedCategoryId =ref([])
 // const state = ref(0);
 
 const newCandy = reactive({
@@ -296,15 +323,92 @@ const newCandy = reactive({
   imguid: ''
 });
 
-const uploadHeaders = () => {
+const AddformRules = {
+  name: [
+    { required: true, message: '商品名至少3个字符', min: 3, trigger: 'blur' }
+  ],
+  comment: [
+    { required: true, message: '商品描述至少10个字符', min: 10, trigger: 'blur' }
+  ],
+  category: [
+    { required: true, message: '请选择商品类型', trigger: 'change' }
+  ],
+  price: [
+    { required: true, message: '请输入商品价格', trigger: 'blur' }
+  ],
+  num: [
+    { required: true, message: '请输入商品库存', trigger: 'blur' }
+  ],
+  kgs: [
+    { required: true, message: '请输入商品克重', trigger: 'blur' }
+  ],
+  size: [
+    { required: true, message: '请输入商品尺寸', trigger: 'blur' }
+  ],
+  expirationdate: [
+    { required: true, message: '请输入商品保质期', trigger: 'blur' }
+  ],
+  creationdate: [
+    { required: true, message: '请输入商品生产日期', trigger: 'blur' }
+  ],
+  storagemethod: [
+    { required: true, message: '储存方法至少10个字符', min: 10, trigger: 'blur' }
+  ]
+};
+
+const EditformRules = {
+  name: [
+    { required: true, message: '商品名至少3个字符', min: 3, trigger: 'blur' }
+  ],
+  comment: [
+    { required: true, message: '商品描述至少10个字符', min: 10, trigger: 'blur' }
+  ],
+  category: [
+    { required: true, message: '请选择商品类型', trigger: 'change' }
+  ],
+  price: [
+    { required: true, message: '请输入商品价格', trigger: 'blur' }
+  ],
+  num: [
+    { required: true, message: '请输入商品库存', trigger: 'blur' }
+  ],
+  state: [
+    { required: true, message: '请选择商品状态', trigger: 'change' }
+  ],
+  kgs: [
+    { required: true, message: '请输入商品克重', trigger: 'blur' }
+  ],
+  size: [
+    { required: true, message: '请输入商品尺寸', trigger: 'blur' }
+  ],
+  expirationdate: [
+    { required: true, message: '请输入商品保质期', trigger: 'blur' }
+  ],
+  addtime: [
+    { required: true, message: '请输入商品添加时间', trigger: 'change' }
+  ],
+  creationdate: [
+    { required: true, message: '请输入商品生产日期', trigger: 'change' }
+  ],
+  storagemethod: [
+    { required: true, message: '储存方法至少10个字符', min: 10, trigger: 'blur' }
+  ]
+};
+
+
+
+
+// 使用 ref 存储上传的 header 信息
+const uploadHeaders = computed(() => {
   return {
     Authorization: `Bearer ${getToken()}`
   };
-}
+});
 
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
   fetchCandyList(currentPage.value, pageSize.value);
+  console.log("token:", getToken)
 });
 
 // 获取商品列表数据
@@ -312,16 +416,18 @@ const fetchCandyList = (pageNum, pageSize) => {
   showProgress.value = true;
   getcandy(pageNum, pageSize)
     .then((res) => {
-      candyList.value = res.data.list;
-      totalItems.value = res.data.total;  // 设置总记录数
+      candyList.value = res.data.pageInfo.list;
+      totalItems.value = res.data.pageInfo.total;  // 设置总记录数
+      cateList.value = res.data.categoryList; // 存储类别数据
       showProgress.value = false;
+      // console.log("数据",res.data.pageInfo.categoryList)
     })
     .catch((err) => {
       console.error(err);
       showProgress.value = false;
     });
-  console.log("Current Page: ", pageNum);
-  console.log("Page Size: ", pageSize);
+  // console.log("Current Page: ", pageNum);
+  // console.log("Page Size: ", pageSize);
 
 };
 
@@ -335,25 +441,52 @@ const handleSearch = () => {
   showProgress.value = true;
   currentPage.value = 1; // 搜索从第一页开始
   const name = inputsearch.value.trim(); // 获取搜索内容
+  const categoryId = selectedCategoryId.value; // 获取选择的分类ID
 
-  if (name === "") {
-    // 如果搜索框为空，显示所有商品
-    currentPage.value = 1;  // 重置为第一页
-    fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
-  }
-  else {
-    getcandyByname(currentPage.value, pageSize.value, name)
-      .then((res) => {
-        candyList.value = res.data.list || []; // 更新商品列表
-        totalItems.value = res.data.total || 0; // 更新总记录数
-        showProgress.value = false;
-      })
-      .catch((err) => {
-        console.error("搜索失败: ", err);
-        showProgress.value = false;
-      });
-  }
+  // 调用 API 获取数据
+  fetchCandyList2(currentPage.value, pageSize.value, name, categoryId);
 };
+
+// 获取糖果列表（包括分页和搜索）
+const fetchCandyList2 = (pageNum, pageSize, name, categoryId) => {
+  getcandyByWhere(pageNum, pageSize, name, categoryId)
+    .then((res) => {
+      if (res.data && res.data.pageInfo) {
+        candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+        totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+      }
+      showProgress.value = false;
+    })
+    .catch((err) => {
+      console.error("查询失败: ", err);
+      showProgress.value = false;
+    });
+};
+
+// // 搜索按钮点击事件处理
+// const handleSearch = () => {
+//   showProgress.value = true;
+//   currentPage.value = 1; // 搜索从第一页开始
+//   const name = inputsearch.value.trim(); // 获取搜索内容
+
+//   if (name === "") {
+//     // 如果搜索框为空，显示所有商品
+//     currentPage.value = 1;  // 重置为第一页
+//     fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
+//   }
+//   else {
+//     getcandyByname(currentPage.value, pageSize.value, name)
+//       .then((res) => {
+//         candyList.value = res.data.list || []; // 更新商品列表
+//         totalItems.value = res.data.total || 0; // 更新总记录数
+//         showProgress.value = false;
+//       })
+//       .catch((err) => {
+//         console.error("搜索失败: ", err);
+//         showProgress.value = false;
+//       });
+//   }
+// };
 
 // 分页变化时的处理函数
 const handlePageChange = (page) => {
@@ -361,6 +494,9 @@ const handlePageChange = (page) => {
   fetchCandyList(currentPage.value, pageSize.value);
 };
 
+function onCancel() {
+  clicked.value = true
+}
 
 // 删除商品
 const deCandy = (item) => {
@@ -425,10 +561,11 @@ const saveEdit = () => {
             msgla(res.msg);
 
             // 更新本地 candyList 数据
-            const index = candyList.value.findIndex(candy => candy.id === editCandy.value.id);
-            if (index !== -1) {
-              candyList.value.splice(index, 1, { ...formattedCandy });
-            }
+            // const index = candyList.value.findIndex(candy => candy.id === editCandy.value.id);
+            // if (index !== -1) {
+            //   candyList.value.splice(index, 1, { ...formattedCandy });
+            // }
+            fetchCandyList(currentPage.value, pageSize.value);
 
             closeDialog();
           } else {
@@ -468,22 +605,22 @@ const submitNewCandy = () => {
         ...newCandy, // 保留所有字段
         creationdate: newCandy.creationdate
           ? dayjs(newCandy.creationdate).format("YYYY-MM-DD")
-          : "", 
+          : "",
       };
 
 
-      addCandy(formattedNewCandy) 
+      addCandy(formattedNewCandy)
         .then((res) => {
           if (res.code === 200) {
             console.log(formattedNewCandy)
             msgla('商品添加成功！');
             closeAddDialog();
           } else {
-            msgls('添加失败：' + res.msg);
+            msgls('添加失败：', res.msg);
           }
         })
         .catch((err) => {
-          msgls('添加失败：' + err.message);
+          msgls(err.message, "error");
           console.error('添加商品失败:', err);
         });
     } else {
@@ -499,7 +636,7 @@ const handleAddUploadSuccess = (res) => {
     newCandy.imguid = res.data;
     msgla('图片上传成功');
   } else {
-    msgls(res.msg + "error");
+    msgls(res.msg, "error");
   }
 };
 
@@ -521,6 +658,7 @@ const handleAddExceed = () => {
 const handleUploadSuccess = (res) => {
   if (res.code === 200) {
     msgla('图片上传成功');
+    newCandy.imguid = res.data;
     // msgls('上传成功，文件地址：' + res.data);
 
     // 更新当前数据列的 imgurl 字段
@@ -531,24 +669,23 @@ const handleUploadSuccess = (res) => {
       .then((response) => {
         if (response.code === 200) {
           msgla('商品图片已更新成功');
-        } else {
-          msgls('图片上传成功，但商品信息更新失败：' + response.msg);
+        } else if (res.code === 400) {
+          msgls('图片上传成功，但商品信息更新失败：', response.msg);
         }
       })
       .catch((error) => {
-        msgls('商品信息更新失败：' + error.message);
+        msgls('商品信息更新失败：', error.message);
         console.error('商品信息更新失败：', error);
       });
-  } else if (res.code === 400) {
-    msgls(res.msg);
-    console.error('上传失败：', res.msg);
+  } else {
+    msgls(res.msg, "error");
   }
 };
 
 // 上传失败
-const handleUploadError = (error) => {
-  msgls('上传失败：', error)
-  console.error('上传失败：', error);
+const handleUploadError = (err) => {
+  msgls('图片上传失败');
+  console.error('上传错误:', err);
 };
 
 // 上传超出限制处理
@@ -575,35 +712,26 @@ const handlePictureCardPreview = (file) => {
 //图片处理结束-------------------------------
 
 
+const Reload = () => {
+  reloadCandy()
+    .then((res) => {
+      if (res.code === 200) {
+        msgla("刷新缓存成功")
 
-// 更新商品上架/下架状态
-// const updateCandyState = (item) => {
-//   const newState = item.state; // 获取切换后的状态
-//   updateCandySta({ id: item.id, state: newState }) // 调用更新商品接口
-//     .then((res) => {
-//       if (res.code === 200) {
-//         const message = newState === 1 ? '商品已上架' : '商品已下架';
-//         msgla(message); // 显示成功消息
-//       } else {
-//         msgla('状态更新失败：' + res.msg);
-//         // 回滚状态
-//         item.state = newState === 1 ? 0 : 1;
-//       }
-//     })
-//     .catch((err) => {
-//       msgls('状态更新失败：' + err.message);
-//       // 回滚状态
-//       item.state = newState === 1 ? 0 : 1;
-//     });
-// };
-
-
-
+        fetchCandyList();
+      }
+      if (res.code === 500) {
+        msgla(res.msg, "error")
+      }
+    })
+};
 
 // 返回按钮点击事件处理
 const onBack = () => {
   router.push('index');
 };
+
+
 </script>
 
 <style scoped>
@@ -623,5 +751,10 @@ const onBack = () => {
   background: var(--el-fill-color-light);
   color: var(--el-text-color-secondary);
   font-size: 60px;
+}
+
+.el-tag {
+  border: none;
+  aspect-ratio: 1;
 }
 </style>

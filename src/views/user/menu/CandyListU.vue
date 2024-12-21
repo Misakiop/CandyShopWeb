@@ -18,8 +18,13 @@
             </template>
             <template #content>
                 <div class="search">
-                    <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" />
+                    <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'"
+                        clearable />
                     <el-button type="primary" @click="handleSearch">搜索</el-button>
+                    <el-tooltip class="box-item" effect="light" content="刷新缓存" placement="top">
+                        <el-button @click="Reload" color="pink" circle><el-icon color="white" style="font-size: 20px;">
+                                <Refresh />
+                            </el-icon></el-button></el-tooltip>
                 </div>
             </template>
         </el-page-header>
@@ -53,22 +58,30 @@
                             <el-badge :value="getCartItemQuantity(item.id)" class="item" :show-zero="false"
                                 :offset="[1, 2]">
                                 <el-tooltip effect="dark" content="加入购物车" placement="bottom">
-                                    <el-button circle color="#f1a03a" style="margin-left: 50px"
+                                    <el-button circle color="#f1a03a" size="large" style="margin-left: 130px;"
                                         @click.stop="FastSaveCart(item)">
-                                        <el-icon :size="20" style="margin-left: -1px; color: white;">
+                                        <el-icon :size="25" style="margin-left: -1px; margin-top: 3px; color: white;" class="font-extrabold">
                                             <ShoppingCart />
                                         </el-icon>
                                     </el-button>
                                 </el-tooltip>
                             </el-badge>
 
-
-                            <el-button style="margin-top: 8px; width: 66.5px; font-weight: 600; color: white;"
-                                color="#ec602a" @click="toBuy">立即购买</el-button>
+                            <!-- <el-button style="margin-top: 8px; width: 66.5px; font-weight: 600; color: white;"
+                                color="#ec602a" @click="toBuy">立即购买</el-button> -->
                         </div>
                         <el-text>剩余：</el-text>
                         <el-text :style="{ color: item.num < 50 ? 'red' : '#6c6e71' }">{{ item.num }}</el-text>
-
+                        <div style="display: flex;align-items: flex-start;">
+                            <el-tag class="bg-pink-500 text-light-600 font-bold" round style="margin-top: 5px;">
+                                {{ item.category.name }}
+                            </el-tag>
+                            <el-tag v-if="item.state !== 0" class="font-bold tracking-widest" effect="dark"
+                                style="margin-left: 130px; margin-top: 5px;"
+                                :type="item.state === 2 ? 'warning' : 'success'">
+                                {{ item.state === 2 ? '缺货' : '安心购' }}
+                            </el-tag>
+                        </div>
                     </el-card>
                 </el-col>
             </el-row>
@@ -116,7 +129,7 @@
                                 <el-text class="text-xs">编号:{{ AddCartCandy.id }}</el-text>
                             </el-form-item>
                             <el-form-item prop="category" :label-width="formLabelWidth" style="margin-top: 30px;">
-                                <el-text style="letter-spacing: 3px;" class="font-bold">品类:{{ AddCartCandy.category
+                                <el-text style="letter-spacing: 3px;" class="font-bold">品类:{{ AddCartCandy.category.name
                                     }}</el-text>
                             </el-form-item>
                             <el-form-item prop="num" :label-width="formLabelWidth" style="margin-top: 50px;">
@@ -165,9 +178,13 @@
 
                         <el-divider direction="vertical" border-style="solid" style="height: 220px;" />
                         <div style="width: 400px; margin-top: -20px; margin-left: 25px;">
-                            <el-text class="font-bold"
-                                style="font-size: 15px; letter-spacing: 3px;">克重:</el-text><br /><br>
-                            <el-radio size="large" border>均克</el-radio><br />
+                            <el-text class="font-bold" style="font-size: 15px; letter-spacing: 3px;">克重:</el-text>
+                            <el-text class="font-bold" style="margin-left: 40%;">合计:</el-text>
+                            <br /><br>
+                            <el-radio size="large" border>均克</el-radio>
+                            <el-text class="font-bold text-red-400" style="margin-left: 23%; font-size: 30px;">
+                                ￥{{ money }}</el-text>
+                            <br />
                             <div style="margin-top: 30px;">
                                 <el-input-number v-model="buyNum" size="large" :min="1" @change="NumChange"
                                     style="width: 140px; " />
@@ -175,14 +192,46 @@
                             <el-button color="#f1a03a" class="font-bold" round size="large"
                                 style="margin-top: 30px; color: white; font-size: 17px; width: 120px;"
                                 @click="saveCart(AddCartCandy)">加入购物车</el-button>
-                            <el-button color="#ec602a" class="font-bold" round size="large"
-                                style="margin-top: 30px; color: white; font-size: 17px; width: 120px;">立即购买</el-button>
+                            <el-button @click="FastsaveCart(AddCartCandy)" color="#ec602a" class="font-bold" round
+                                size="large"
+                                style="margin-top: 30px;margin-left: 80px; color: white; font-size: 17px; width: 120px; ">立即购买</el-button>
                         </div>
                     </div>
                 </div>
             </el-drawer>
         </el-form>
         <!-- 加入购物车抽屉结束 -->
+
+        <!-- 订单确认页面开始 -->
+        <!-- <el-dialog v-model="diaOrder" title="确认订单" width="500">
+            <el-form ref="OrderRef" :model="addOrderList" label-width="auto">
+                <el-form-item label="商品编号：">{{ addOrderList.id }}</el-form-item>
+                <el-form-item label="商品名称：">{{ addOrderList.name }}</el-form-item>
+                <el-form-item label="商品价格：">{{ addOrderList.price }}</el-form-item>
+                <el-form-item label="购买数量：">{{ buyNum }}</el-form-item>
+                <el-form-item label="总金额：">
+                    <p class=" text-red-500 font-bold">{{ money }}</p>
+                </el-form-item>
+                <el-form-item label="收货人：">
+                    <el-input v-model="Atuserinfo.username" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="联系电话：">
+                    <el-input v-model="Atuserinfo.telephone" autocomplete="off" />
+                </el-form-item>
+                <el-form-item label="收货地址：">
+                    <el-input v-model="Atuserinfo.address" type="textarea" placeholder="请输入收货地址" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <div class="dialog-footer">
+                    <el-button @click="diaOrder = false">取消</el-button>
+                    <el-button type="danger" @click="AddToOrder">
+                        确定订单
+                    </el-button>
+                </div>
+            </template>
+        </el-dialog> -->
+        <!-- 订单确认页面结束 -->
 
         <!-- 回到顶部 -->
         <el-backtop :right="100" :bottom="100" />
@@ -200,9 +249,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, } from 'vue';
+import { ref, onMounted, computed, watch, toRaw, } from 'vue';
 import { useRouter } from 'vue-router';
-import { addToCart, getcandy, getcandyByname, getcarts } from "../../../api/manager";
+import { addToCart, createOrder, getcandy, getcandyByname, getcandyUser, getcarts, reloadCandy } from "../../../api/manager";
 import { msgla } from '../../../composables/util';
 
 const router = useRouter();
@@ -218,29 +267,46 @@ const visible = ref(false);  //加入购物车抽屉默认关闭
 const addCartRef = ref(null); // 添加购物车绑定数据
 const buyNum = ref(1);  //默认buyNum为1
 const cartit = ref([]); //购物车数据
-
+// const diaOrder = ref(false);
+// const addOrderList = ref({})
+// const OrderRef = ref(null);
+// const Atuserinfo = ref({});
 
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
     fetchCandyList(currentPage.value, pageSize.value);
     fetchCartList();
+
+    // const AtuserinfoStr = sessionStorage.getItem("Atuserinfo");
+    // if (AtuserinfoStr) {
+    //     try {
+    //         const user = JSON.parse(AtuserinfoStr);
+    //         Atuserinfo.value = user; // 更新响应式数据
+    //     } catch (error) {
+    //         console.error('无法从 sessionStorage 解析 Atuserinfo：', error);
+    //     }
+    // }
+});
+
+const money = computed(() => {
+    return (AddCartCandy.value.price * buyNum.value);
 });
 
 // 获取商品列表数据
 const fetchCandyList = (pageNum, pageSize) => {
     showProgress.value = true;
-    getcandy(pageNum, pageSize)
+    getcandyUser(pageNum, pageSize)
         .then((res) => {
-            candyList.value = res.data.list;
-            totalItems.value = res.data.total;  // 设置总记录数
+            candyList.value = res.data.pageInfo.list;
+            totalItems.value = res.data.pageInfo.total;  // 设置总记录数
             showProgress.value = false;
         })
         .catch((err) => {
             console.error(err);
             showProgress.value = false;
         });
-    console.log("Current Page: ", pageNum);
-    console.log("Page Size: ", pageSize);
+    // console.log("Current Page: ", pageNum);
+    // console.log("Page Size: ", pageSize);
 
 };
 
@@ -251,15 +317,10 @@ const fetchCartList = () => {
             cartit.value = res.data.list;  // 更新购物车数据
         })
         .catch((err) => {
-            console.error(err);
+            // console.error(err);
         });
 };
 
-// 监听购物车数据的变化
-watch(cartit, (newCart) => {
-    // 当购物车更新时，重新计算或更新相关的视图
-    console.log('购物车更新:', newCart);
-});
 
 // 获取购物车中商品的数量
 const getCartItemQuantity = computed(() => (itemId) => {
@@ -326,6 +387,10 @@ const NumChange = (value) => {
 
 //添加到购物车
 const saveCart = (item) => {
+    if (item.num < buyNum.value) {
+        msgla("商品库存不足", "warning")
+        return 0;
+    }
     const cartItem = {
         pid: item.id,       // 商品 ID
         buyNum: buyNum.value,  // 当前购买数量
@@ -352,6 +417,10 @@ const saveCart = (item) => {
 
 //快速添加到购物车
 const FastSaveCart = (item) => {
+    if (item.num <= 0) {
+        msgla("商品库存不足", "warning")
+        return 0;
+    }
     const cartItem = {
         pid: item.id,           // 商品 ID
         buyNum: 1,              //购买数量
@@ -373,8 +442,80 @@ const FastSaveCart = (item) => {
             console.error('添加购物车请求失败:', error.message || error);
             msgla('请求失败，请稍后重试', "error");
         });
-
 }
+
+const FastsaveCart = (item) => {
+    if (item.num < buyNum.value) {
+        msgla("商品库存不足", "warning")
+        return 0;
+    }
+    const cartItem = {
+        pid: item.id,       // 商品 ID
+        buyNum: buyNum.value,  // 当前购买数量
+        buyPrice: item.price,  // 商品价格
+    };
+
+    addToCart(cartItem)
+        .then((res) => {
+            console.log('完整响应数据:', res); // 打印完整的响应对象
+            if (res.code === 200) {
+                msgla('加入购物车成功')
+                router.push('/user/cartlist');
+            } else {
+                console.error('服务器未返回有效数据:', res); // 打印未解析的响应
+                msgla('添加失败', "error");
+            }
+        })
+        .catch((error) => {
+            console.error('添加购物车请求失败:', error.message || error);
+            msgla('请求失败，请稍后重试', "error");
+        });
+}
+
+const Reload = () => {
+    reloadCandy()
+        .then((res) => {
+            if (res.code === 200) {
+                msgla("刷新缓存成功")
+
+                fetchCandyList();
+            }
+            if (res.code === 500) {
+                msgla(res.msg, "error")
+            }
+        })
+}
+
+// // 确认订单窗口
+// const addOrder = (row) => {
+//     // console.log("选择的商品:", row); // 调试用，确保 row 数据正确
+//     addOrderList.value = { ...row }; // 将商品数据赋值给 addOrderList
+//     diaOrder.value = true;  // 打开订单确认窗口
+// };
+
+// //创建订单
+// const AddToOrder = () => {
+//     OrderRef.value.validate((valid) => {
+//         if (!valid) {
+//             return false;  // 如果表单验证不通过，则阻止提交
+//         };
+//         console.log("addOrderList:",addOrderList)
+//         console.log("addOrderListvalue:",addOrderList.value)
+//         const orderdata = JSON.parse(JSON.stringify(addOrderList.value));
+//         console.log("Json序列化:",orderdata)
+//         const ordertoRaw = toRaw(addOrderList.value)
+//         console.log("toRaw方法:",ordertoRaw)
+//         const order = {
+//             receiverName: ordertoRaw.username,
+//             receiverPhone: ordertoRaw.telephone,
+//             receiverAddress: ordertoRaw.address
+//         }
+
+//         console.log("order数据:",order)
+
+//         // createOrder(addOrderList.value)
+//     })
+// }
 
 </script>
 

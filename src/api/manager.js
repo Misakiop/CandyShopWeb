@@ -18,6 +18,8 @@ export function regist(username, password) {
 
 
 
+
+
 // 用户相关------------------------------------------------------------
 //====================================================================
 //获取用户数据
@@ -28,6 +30,15 @@ export function getinfo(pageNum, pageSize) {
             pageSize: pageSize
         }
     })
+}
+
+export function getcandyUser(pageNum, pageSize) {
+    return axios.get("/api/candy/listwhereuser", {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize
+        }
+    });
 }
 
 //更新用户数据
@@ -49,16 +60,32 @@ export function deleteUser(id) {
     return axios.delete(`/api/user/delete/${id}`)
 }
 
+//清空缓存
+export function reloadUser(){
+    return axios.delete(`/api/user/clearCache`)
+}
+
 
 
 // 商品相关------------------------------------------------------------
 //====================================================================
 //分页获取商品数
 export function getcandy(pageNum, pageSize) {
-    return axios.get("/api/candy/list", {
+    return axios.get("/api/candy/listwhere", {
         params: {
             pageNum: pageNum,
             pageSize: pageSize
+        }
+    });
+}
+
+export function getcandyByWhere(pageNum, pageSize, name, categoryId) {
+    return axios.get('/api/candy/listwhere', {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize,
+            name: name,  // 商品名称
+            categoryId: categoryId  // 分类ID
         }
     });
 }
@@ -82,15 +109,6 @@ export function updateCandy(candyData) {
     });
 }
 
-//修改商品状态
-// export function updateCandySta(candyData) {
-//     return axios.put(`/api/admin/updatestate`, candyData, {
-//         params: {
-//             id: candyData.id
-//         }
-//     });
-// }
-
 //添加商品
 export function addCandy(candyData) {
     return axios.post('/api/admin/insert', candyData);
@@ -99,6 +117,11 @@ export function addCandy(candyData) {
 //删除商品
 export function deleteCandy(id){
     return axios.delete(`/api/admin/deleteshop/${id}`)
+}
+
+//清空缓存
+export function reloadCandy(){
+    return axios.delete(`/api/candy/clearCache`)
 }
 
 
@@ -136,6 +159,38 @@ export function delToCart(idArr) {
 }
 
 
+// 订单相关------------------------------------------------------------
+//====================================================================
+//提交订单
+export function createOrder(order) {
+    return axios.post('/api/order/create', order)
+}
+
+//分页获取商品数
+export function getAllOrders(pageNum, pageSize) {
+    return axios.get("/api/order/list", {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize
+        }
+    });
+}
+
+//id查找订单
+export function getOrderById(id) {
+    return axios.get(`/api/order/select/${id}`)
+}
+
+//修改订单
+export function updateOrder(orderData){
+    return axios.post(`/api/order/update`, orderData);
+}
+
+//删除订单
+export function deleteOrder(id){
+    return axios.delete(`/api/order/delete/${id}`)
+
+}
 
 
 

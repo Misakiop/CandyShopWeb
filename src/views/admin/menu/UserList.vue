@@ -18,11 +18,16 @@
         </template>
         <template #content>
           <div class="search">
-            <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入用户名" :prefix-icon="'Search'" />
+            <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入用户名" :prefix-icon="'Search'"
+              clearable />
             <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-tooltip class="box-item" effect="dark" content="新增用户" placement="right">
+            <el-tooltip class="box-item" effect="light" content="新增用户" placement="top">
               <el-button type="success" @click="AddUSerDia = true" circle><el-icon style="font-size: 40px;">
                   <CirclePlus />
+                </el-icon></el-button></el-tooltip>
+            <el-tooltip class="box-item" effect="light" content="刷新缓存" placement="top">
+              <el-button @click="Reload" type="success" circle><el-icon style="font-size: 20px;">
+                  <Refresh />
                 </el-icon></el-button></el-tooltip>
           </div>
         </template>
@@ -41,7 +46,7 @@
                     <el-text class="font-bold text-xs">{{ scope.row.id }}</el-text>
                   </template>
                   <template #reference>
-                    <el-text :type="randomTagType" class="font-bold" style="width: 100px" truncated>
+                    <el-text class="font-bold" style="width: 100px" truncated>
                       {{ scope.row.id }}
                     </el-text>
                   </template>
@@ -57,7 +62,7 @@
                     <el-text class="font-bold text-xs">{{ scope.row.username }}</el-text>
                   </template>
                   <template #reference>
-                    <el-text :type="randomTagType" class="font-bold" style="width: 100px" truncated>
+                    <el-text class="font-bold" style="width: 100px" truncated>
                       {{ scope.row.username }}
                     </el-text>
                   </template>
@@ -73,7 +78,7 @@
                     <el-text class="font-bold text-xs">{{ scope.row.password }}</el-text>
                   </template>
                   <template #reference>
-                    <el-text :type="randomTagType" class="font-bold" style="width: 100px" truncated>
+                    <el-text class="font-bold" style="width: 100px" truncated>
                       {{ scope.row.password }}
                     </el-text>
                   </template>
@@ -83,7 +88,7 @@
 
             <el-table-column prop="gender" label="性别" width="100">
               <template #default="scope">
-                <el-text :type="randomTagType" class="font-bold" style="width: 100px" truncated>
+                <el-text class="font-bold" style="width: 100px" truncated>
                   {{ scope.row.gender }}
                 </el-text>
               </template>
@@ -97,7 +102,7 @@
                     <el-text class="font-bold text-xs">{{ scope.row.email }}</el-text>
                   </template>
                   <template #reference>
-                    <el-text :type="randomTagType" class="font-bold" style="width: 160px" truncated>
+                    <el-text class="font-bold" style="width: 160px" truncated>
                       {{ scope.row.email }}
                     </el-text>
                   </template>
@@ -107,7 +112,7 @@
 
             <el-table-column prop="telephone" label="电话号码" width="120">
               <template #default="scope">
-                <el-text :type="randomTagType" class="font-bold" style="width: 100px" truncated>
+                <el-text class="font-bold" style="width: 100px" truncated>
                   {{ scope.row.telephone }}
                 </el-text>
               </template>
@@ -121,7 +126,7 @@
                     <el-text class="font-bold text-xs">{{ scope.row.introduce }}</el-text>
                   </template>
                   <template #reference>
-                    <el-text :type="randomTagType" class="font-bold" style="width: 120px" truncated>
+                    <el-text class="font-bold" style="width: 120px" truncated>
                       {{ scope.row.introduce }}
                     </el-text>
                   </template>
@@ -153,10 +158,10 @@
 
             <el-table-column label="操作" width="180">
               <template #default="scope">
-                <el-button type="primary" circle @click="userEdit(scope.row)"><el-icon>
+                <el-button class="bg-green-400" circle @click="userEdit(scope.row)"><el-icon size="large" color="white">
                     <Edit />
                   </el-icon></el-button>
-                <el-button type="danger" circle @click="handleDelete(scope.row)"><el-icon>
+                <el-button type="danger" circle @click="handleDelete(scope.row)"><el-icon size="large">
                     <Delete />
                   </el-icon></el-button>
               </template>
@@ -167,7 +172,7 @@
 
         <!-- 用户修改 -->
         <el-dialog v-model="dialogVisible" title="编辑用户信息" width="500">
-          <el-form :model="editUser" ref="formRef2" style="margin-left: -35px;">
+          <el-form :model="editUser" ref="UserformRef" :rules="editUserRules" style="margin-left: -35px;">
             <el-form-item label="用户名" :label-width="formLabelWidth">
               <el-input v-model="editUser.username" autocomplete="off" />
             </el-form-item>
@@ -211,26 +216,26 @@
         </el-dialog>
         <!-- 用户修改结束 -->
       </el-page-header>
- <!-- 添加用户开始 -->
- <el-dialog v-model="AddUSerDia" title="新增用户" width="500" :before-close="handleClose">
-    <el-form :model="AddUser" :rules="USERrules" ref="formRef" style="margin-left: -35px;">
-      <el-form-item label="用户名" :label-width="formLabelWidth">
-        <el-input v-model="AddUser.username" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="密码" :label-width="formLabelWidth">
-        <el-input v-model="AddUser.password" autocomplete="off"  />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div>
-        <el-button @click="AddUSerDia = false">Cancel</el-button>
-        <el-button type="primary" @click="onSubmit">
-          Confirm
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
-  <!-- 添加用户结束 -->
+      <!-- 添加用户开始 -->
+      <el-dialog v-model="AddUSerDia" title="新增用户" width="500">
+        <el-form :model="AddUser" :rules="USERrules" ref="formRef" style="margin-left: -35px;">
+          <el-form-item label="用户名" :label-width="formLabelWidth">
+            <el-input v-model="AddUser.username" autocomplete="off" />
+          </el-form-item>
+          <el-form-item label="密码" :label-width="formLabelWidth">
+            <el-input v-model="AddUser.password" autocomplete="off" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <div>
+            <el-button @click="AddUSerDia = false">取消</el-button>
+            <el-button type="primary" @click="onSubmit">
+              完成
+            </el-button>
+          </div>
+        </template>
+      </el-dialog>
+      <!-- 添加用户结束 -->
 
       <!-- 页码开始 -->
       <el-footer>
@@ -248,7 +253,7 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { getinfo, updateUserInfo, getUserByName, regist } from "../../../api/manager";
+import { getinfo, updateUserInfo, getUserByName, regist, deleteUser, reloadUser } from "../../../api/manager";
 import { msgls, msgla } from "../../../composables/util";
 
 const router = useRouter();
@@ -260,22 +265,66 @@ const editUser = ref({});
 const formLabelWidth = '120px';
 const inputsearch = ref('');
 const formRef = ref(null); // 添加对表单的引用
-const formRef2 = ref(null);  // 表单引用
 const totalItems = ref(0);  // 总商品数量
 const currentPage = ref(1);  // 当前页
 const pageSize = ref(10);  // 每页商品数量
+const UserformRef = ref(null);  // 表单引用
+
 
 const AddUser = reactive({
   username: '',
   password: ''
 });
 
+// 表单验证规则
+const editUserRules = {
+  username: [
+    {
+      required: true,
+      message: "用户名不能为空",
+      trigger: "blur",
+    },
+    {
+      min: 3,
+      max: 5,
+      message: "用户名长度必须是3-5个字符",
+      trigger: "blur",
+    },
+  ],
+  password: [
+  {
+      required: true,
+      min: 6,
+      message: "密码长度至少为 6 个字符",
+      trigger: "blur",
+    },
+  ],
+  gender: [
+    { required: true, message: '请选择性别', trigger: 'change' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  ],
+  telephone: [
+    { required: true, message: '请输入电话号码', trigger: 'blur' },
+    { pattern: /^[0-9]{11}$/, message: '请输入有效的电话号码', trigger: 'blur' }
+  ],
+  introduce: [
+    { required: false, message: '请输入个性签名', trigger: 'blur' }
+  ],
+  address: [
+    { required: false, message: '请输入地址', trigger: 'blur' }
+  ]
+};
+
+
 // 组件挂载后执行的函数
 onMounted(() => {
   fetchUserList(currentPage.value, pageSize.value);
 });
 
-// 获取商品列表数据
+// 获取用户列表数据
 const fetchUserList = (pageNum, pageSize) => {
   showProgress.value = true;
   getinfo(pageNum, pageSize)
@@ -288,8 +337,8 @@ const fetchUserList = (pageNum, pageSize) => {
       console.error(err);
       showProgress.value = false;
     });
-  console.log("Current Page: ", pageNum);
-  console.log("Page Size: ", pageSize);
+  // console.log("Current Page: ", pageNum);
+  // console.log("Page Size: ", pageSize);
 
 };
 
@@ -348,7 +397,18 @@ const userEdit = (row) => {
 
 // 删除用户信息
 const handleDelete = (row) => {
-  console.log('Delete row:', row);
+  // console.log('Delete row:', row);
+  const id = row.id
+  // console.log('Delete row:', id);
+
+  deleteUser(id)
+    .then((res) => {
+      if (res.code === 200) {
+        msgla(res.msg)
+      } if (res.code === 400) {
+        msgla(res.msg, "error")
+      }
+    })
 };
 
 // 关闭对话框
@@ -358,65 +418,56 @@ const closeDialog = () => {
 
 // 保存编辑的信息
 const saveEdit = () => {
-  formRef.value.validate((valid) => { // 调用表单的 validate 方法
+  // 调用表单的 validate 方法，进行表单验证
+  UserformRef.value.validate((valid) => {
     if (valid) {
       // 表单验证通过，执行保存操作
-      updateUserInfo(editUser.value).then(() => {
-        // ElMessage.success('用户信息更新成功');
-        closeDialog();
-      }).catch(err => {
-        ElMessage.error('用户信息更新失败: ' + err.message);
-      });
+      updateUserInfo(editUser.value)
+        .then((res) => {
+          if (res.code === 200) {
+            console.log("状态码:" + res.code, "提示:" + res.msg);
+            msgla(res.msg);
+            closeDialog(); // 关闭对话框
+            fetchUserList();
+          } else {
+            console.log("状态码:" + res.code, "提示:" + res.msg);
+            ElMessage.error(res.msg);
+          }
+        })
+        .catch((err) => {
+          // 处理更新失败的情况
+          ElMessage.error('用户信息更新失败: ' + err.message);
+        });
     } else {
-      console.log('error submit!!');
-      return false;
+      console.log('表单验证失败');
     }
   });
-
-  const index = userList.value.findIndex(user => user.id === editUser.value.id);
-  if (index !== -1) {
-    userList.value.splice(index, 1, { ...editUser.value });
-  }
-
-  updateUserInfo(editUser.value)
-    .then((res) => {
-      if (res.code === 200) {
-        console.log("状态码:" + res.code, "提示:" + res.msg);
-        msgla(res.msg);
-
-        closeDialog();
-      } else {
-        console.log("状态码:" + res.code, "提示:" + res.msg);
-        msgls(res.msg);
-      }
-    });
 };
 
 
 //添加用户
 const onSubmit = () => {
-  formRef.value.validate((valid) => {  // 使用 formRef 调用 validate 方法
+  formRef.value.validate((valid) => {
     if (!valid) {
-      return false;  // 如果表单验证不通过，则阻止提交
+      return false;
     }
     // 注册用户
     regist(AddUser.username, AddUser.password)
       .then((res) => {
         console.log("注册成功:", res);
         msgla(res.msg);
-        
-        // 假设返回的res包含新注册的用户信息
+
         const newUser = {
-          id: res.data.id,  // 例如，注册返回的用户ID
+          id: res.data.id,
           username: AddUser.username,
           password: AddUser.password,
-          gender: '男',  // 可以设定默认值
-          email: '',     // 可以设定默认值
-          telephone: '', // 可以设定默认值
-          introduce: '', // 可以设定默认值
-          address: '',   // 可以设定默认值
-          registTime: '',  // 注册时间
-          lastPasswordResetDate: '' // 最后修改密码时间
+          gender: '',
+          email: '',
+          telephone: '',
+          introduce: '',
+          address: '',
+          registTime: '',
+          lastPasswordResetDate: ''
         };
 
         // 将新注册的用户添加到userList中
@@ -433,6 +484,20 @@ const onSubmit = () => {
       });
   });
 };
+
+const Reload = () => {
+  reloadUser()
+    .then((res) => {
+      if (res.code === 200) {
+        msgla("刷新缓存成功")
+
+        fetchUserList();
+      }
+      if (res.code === 500) {
+        msgla(res.msg, "error")
+      }
+    })
+}
 
 
 </script>

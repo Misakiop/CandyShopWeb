@@ -20,11 +20,11 @@
             </el-page-header>
             <!-- 页头结束 -->
 
-            <!-- 购物车内容开始 -->
+            <!-- 购物车表格开始 -->
             <div id="car-candylist">
                 <el-table ref="NowCartchoosRef" :data="cartList" @selection-change="handleCartChange"
                     style="width: 100%">
-                    <el-table-column type="selection" :selectable="selectable" width="100" />
+                    <!-- <el-table-column type="selection" :selectable="selectable" width="100" /> -->
 
                     <el-table-column prop="candys.id" label="商品ID" width="100">
                         <template #default="scope">
@@ -126,14 +126,42 @@
                             ￥{{ totalAmount }}</el-text>
                     </div>
 
-                    <el-button size="large" type="danger" style="position: absolute; right: 0; margin-right: 5%;
+                    <el-button @click="diaOrder = true" size="large" type="danger" style="position: absolute; right: 0; margin-right: 5%;
                      font-weight: 600; letter-spacing: 3px; font-size: 16px; margin-top: 10px;">
                         立即下单
                     </el-button>
                 </div>
-
             </div>
-            <!-- 购物车内容结束 -->
+            <!-- 购物车表格结束 -->
+
+            <!-- 订单确认页面开始 -->
+            <el-dialog v-model="diaOrder" title="确认订单" width="500">
+                <el-form ref="OrderRef" :model="Atuserinfo" label-width="auto">
+                    <el-form-item label="总金额：">
+                        <p class=" text-red-500 font-bold">￥{{ totalAmount }}</p>
+                    </el-form-item>
+                    <el-form-item label="收货人：">
+                        <el-input v-model="Atuserinfo.username" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="联系电话：">
+                        <el-input v-model="Atuserinfo.telephone" autocomplete="off" />
+                    </el-form-item>
+                    <el-form-item label="收货地址：">
+                        <el-input v-model="Atuserinfo.address" type="textarea" placeholder="请输入收货地址" />
+                    </el-form-item>
+                </el-form>
+                <template #footer>
+                    <div class="dialog-footer">
+                        <el-button @click="diaOrder = false">取消</el-button>
+                        <el-button type="danger" @click="AddToOrder">
+                            确定订单
+                        </el-button>
+                    </div>
+                </template>
+            </el-dialog>
+            <!-- 订单确认页面结束 -->
+
+
 
 
             <!-- 回到顶部 -->
@@ -144,9 +172,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
-import { delToCart, getcarts } from "../../../api/manager";
+import { createOrder, delToCart, getcarts } from "../../../api/manager";
 import { msgla } from '../../../composables/util';
 
 const router = useRouter();
@@ -157,7 +185,9 @@ const currentPage = ref(1);  // 当前页
 const pageSize = ref(4);  // 每页商品数量
 const buyNum = ref(1);  //默认buyNum为1
 const selectedItems = ref([]);  // 选中的商品列表
-
+const diaOrder = ref(false);
+const OrderRef = ref(null);
+const Atuserinfo = ref({});
 
 //颜色配置
 const tags = ref([
@@ -167,6 +197,8 @@ const tags = ref([
     { type: 'warning' },
     { type: 'danger' },
 ])
+
+
 
 // 获取随机标签类型的方法
 const getRandomTagType = () => {
@@ -180,6 +212,16 @@ const randomTagType = computed(() => getRandomTagType());
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
     fetchCartList(currentPage.value, pageSize.value);
+
+    const AtuserinfoStr = sessionStorage.getItem("Atuserinfo");
+    if (AtuserinfoStr) {
+        try {
+            const user = JSON.parse(AtuserinfoStr);
+            Atuserinfo.value = user; // 更新响应式数据
+        } catch (error) {
+            console.error('无法从 sessionStorage 解析 Atuserinfo：', error);
+        }
+    }
 });
 
 // 获取购物车列表数据
@@ -192,11 +234,11 @@ const fetchCartList = (pageNum, pageSize) => {
             showProgress.value = false;
         })
         .catch((err) => {
-            console.error(err);
+            // console.error(err);
             showProgress.value = false;
         });
-    console.log("Current Page: ", pageNum);
-    console.log("Page Size: ", pageSize);
+    // console.log("Current Page: ", pageNum);
+    // console.log("Page Size: ", pageSize);
 
 };
 
@@ -230,7 +272,7 @@ const deleteCart = (item) => {
             }
         })
         .catch((err) => {
-            msgla("删除失败: " + err.message,"error");
+            msgla("删除失败: " + err.message, "error");
         });
 };
 
@@ -242,9 +284,19 @@ const handleCartChange = (selection) => {
 };
 
 // 计算合计金额，只计算选中的商品
+// const totalAmount = computed(() => {
+//     return selectedItems.value.reduce((total, item) => total + item.buyNum * item.buyPrice, 0);
+// });
+// 计算合计金额
 const totalAmount = computed(() => {
-    return selectedItems.value.reduce((total, item) => total + item.buyNum * item.buyPrice, 0);
+  return cartList.value.reduce((total, item) => {
+    return total + (item.buyNum * item.buyPrice);
+  }, 0).toFixed(2); // 确保金额保留两位小数
 });
+
+// const money = computed(() => {
+//     return (AddCartCandy.value.price * buyNum.value);
+// });
 
 //标签关闭
 const handleClose = () => {
@@ -264,6 +316,42 @@ const NumChange = (value) => {
         buyNum.value = 1;
     }
 }
+
+// 确认订单并保存数据
+const AddToOrder = () => {
+    // 验证表单
+    OrderRef.value.validate((valid) => {
+        if (!valid) {
+            return false; // 如果表单验证不通过，则阻止提交
+        }
+        const orderdata = toRaw(Atuserinfo.value)
+        // console.log("数据orderdata:", orderdata);
+
+        const order = {
+            receiverName: orderdata.username,
+            receiverPhone: orderdata.telephone,
+            receiverAddress: orderdata.address
+        };
+
+        // console.log("数据orderdata:", order);
+
+        createOrder(order)
+            .then(() => {
+                if(res.code === 200){
+                    msgla(res.msg)
+                    diaOrder.value = false;
+                }if(res.code === 401){
+                    msgla(res.msg,"error")
+                }if(res.code === 402){
+                    msgla(res.msg,"error")
+                }
+            })
+            .catch((err) => {
+            msgla(err.message, "error");
+        });
+
+    });
+};
 
 </script>
 
