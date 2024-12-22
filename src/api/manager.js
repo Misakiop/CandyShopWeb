@@ -185,6 +185,11 @@ export function deleteOrder(id){
 
 }
 
+//清空缓存
+export function reloadOrder(){
+    return axios.delete(`/api/order/clearCache`)
+}
+
 
 
 

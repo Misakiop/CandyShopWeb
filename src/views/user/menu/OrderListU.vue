@@ -18,9 +18,8 @@
                 </template>
                 <template #content>
                     <div class="search">
-                        <el-tooltip class="box-item" effect="light" content="刷新" placement="top">
-                            <el-button @click="Reload" class="bg-pink-500" circle><el-icon color="white"
-                                    style="font-size: 20px;">
+                        <el-tooltip class="box-item" effect="light" content="刷新缓存" placement="top">
+                            <el-button @click="Reload" type="success" circle><el-icon style="font-size: 20px;">
                                     <Refresh />
                                 </el-icon></el-button></el-tooltip>
                     </div>
@@ -131,7 +130,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getOrderById, updateOrder } from "../../../api/manager";
+import { getOrderById, reloadOrder, updateOrder } from "../../../api/manager";
 import { msgla } from "../../../composables/util";
 
 const router = useRouter();
@@ -257,6 +256,16 @@ const PayOrder = (item) => {
 };
 
 const Reload = () => {
-    fetchOrderList();
+  reloadOrder()
+    .then((res) => {
+      if (res.code === 200) {
+        msgla("刷新缓存成功")
+
+        fetchUserList();
+      }
+      if (res.code === 500) {
+        msgla(res.msg, "error")
+      }
+    })
 }
 </script>
