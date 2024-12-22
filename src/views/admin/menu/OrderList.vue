@@ -265,7 +265,7 @@ const Reload = () => {
       if (res.code === 200) {
         msgla("刷新缓存成功")
 
-        fetchUserList();
+        fetchOrderList();
       }
       if (res.code === 500) {
         msgla(res.msg, "error")
