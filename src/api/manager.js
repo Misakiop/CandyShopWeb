@@ -63,7 +63,7 @@ export function reloadUser(){
 
 // 商品相关------------------------------------------------------------
 //====================================================================
-//分页获取商品数
+//分页获取全部商品数
 export function getcandy(pageNum, pageSize) {
     return axios.get("/api/candy/listwhere", {
         params: {
@@ -73,26 +73,50 @@ export function getcandy(pageNum, pageSize) {
     });
 }
 
-export function getcandyByWhere(pageNum, pageSize, name, categoryId) {
-    return axios.get('/api/candy/listwhere', {
-        params: {
-            pageNum: pageNum,
-            pageSize: pageSize,
-            name: name,  // 商品名称
-            categoryId: categoryId  // 分类ID
-        }
-    });
-}
-
-//分页查找商品
-export function getcandyByname(pageNum, pageSize, name) {
-    return axios.get(`/api/candy/selectbyname/${name}`, {
+//用户分页获取全部商品数
+export function getcandyuser(pageNum, pageSize) {
+    return axios.get("/api/candy/listwhereuser", {
         params: {
             pageNum: pageNum,
             pageSize: pageSize
         }
     });
 }
+
+//名称搜索商品
+export function getcandyByWhere(pageNum, pageSize, name,) {
+    return axios.get('/api/candy/listwherebyname', {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize,
+            name: name,  // 商品名称
+        }
+    });
+}
+
+//用户名称搜索商品
+export function getcandyByWhereuser(pageNum, pageSize, name,) {
+    return axios.get('/api/candy/listwherebynameuser', {
+        params: {
+            pageNum: pageNum,
+            pageSize: pageSize,
+            name: name,  // 商品名称
+        }
+    });
+}
+
+// 按分类筛选商品
+// export function getcandyByCategory(pageNum, pageSize, categoryId) {
+//     return axios.get('/api/candy/listwherebyname', {
+//         params: {
+//             pageNum: pageNum,
+//             pageSize: pageSize,
+//             categoryId: categoryId || null, // 如果没有分类 ID，则为 null
+//         }
+//     });
+// }
+
+
 
 //修改商品数据
 export function updateCandy(candyData) {

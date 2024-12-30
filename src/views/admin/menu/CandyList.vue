@@ -20,10 +20,10 @@
         <div class="search">
           <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" clearable />
           <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-select clearable v-model="candyList" value-key="id" filter-method="handleSearch"
-            @change="onCategoryChange" placeholder="糖果类型" style="width: 140px;margin-left: 20px;">
-            <el-option v-for="item in cateList" :key="item.id" :label="item.name" :value="item" />
-          </el-select>
+          <!-- <el-select clearable v-model="selectedCategoryId" value-key="id" @change="handleCategoryChange"
+            placeholder="糖果类型" style="width: 140px;margin-left: 20px;">
+            <el-option v-for="category in cateList" :key="category.id" :label="category.name" :value="category.id" />
+          </el-select> -->
           <el-tooltip class="box-item" effect="light" content="添加商品" placement="top">
             <el-button style="margin-left: 20PX;" color="pink" @click="openAddDialog" circle><el-icon color="white"
                 style="font-size: 40px;">
@@ -278,7 +278,7 @@
 <script setup>
 import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { getcandy, updateCandy, addCandy, deleteCandy, reloadCandy, getcandyByWhere, } from "../../../api/manager";
+import { getcandy, updateCandy, addCandy, deleteCandy, reloadCandy, getcandyByWhere,  } from "../../../api/manager";
 import { Edit } from '@element-plus/icons-vue';
 import { msgls, msgla } from "../../../composables/util";
 import dayjs from 'dayjs';
@@ -303,10 +303,7 @@ const deCandyDialogVisible = ref(false);
 const currentItemToDelete = ref(null); // 当前待删除商品
 const cateList = ref([]);
 const clicked = ref(false);
-const selectedCategory = ref(null);  // 用于绑定选择器的值
-const filteredCandyList = ref([]);   // 存储过滤后的商品列表
-const selectedCategoryId = ref([])
-// const state = ref(0);
+const selectedCategoryId = ref(null); // 当前选择的分类 ID
 
 const newCandy = reactive({
   name: '',
@@ -406,27 +403,42 @@ const uploadHeaders = computed(() => {
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
   fetchCandyList(currentPage.value, pageSize.value);
-  console.log("token:", getToken)
+  // fetchCandyListByCategory();
+  // console.log("token:", getToken)
 });
 
-// 获取商品列表数据
+// 获取全部商品列表
 const fetchCandyList = (pageNum, pageSize) => {
   showProgress.value = true;
+
   getcandy(pageNum, pageSize)
     .then((res) => {
-      candyList.value = res.data.pageInfo.list;
-      totalItems.value = res.data.pageInfo.total;  // 设置总记录数
-      cateList.value = res.data.categoryList; // 存储类别数据
+      candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+      totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+      cateList.value = res.data.categoryList || []; // 更新类别数据
       showProgress.value = false;
-      // console.log("数据",res.data.pageInfo.categoryList)
     })
     .catch((err) => {
-      console.error(err);
+      console.error("查询失败: ", err);
       showProgress.value = false;
     });
-  // console.log("Current Page: ", pageNum);
-  // console.log("Page Size: ", pageSize);
+};
 
+// 按名称搜索商品列表
+const fetchCandyListByName = (pageNum, pageSize, name) => {
+  showProgress.value = true;
+
+  getcandyByWhere(pageNum, pageSize, name)
+    .then((res) => {
+      candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+      totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+      cateList.value = res.data.categoryList || []; // 更新类别数据
+      showProgress.value = false;
+    })
+    .catch((err) => {
+      console.error("查询失败: ", err);
+      showProgress.value = false;
+    });
 };
 
 //标签关闭
@@ -435,64 +447,35 @@ const handleClose = () => {
 }
 
 // 搜索按钮点击事件处理
-// const handleSearch = () => {
-//   showProgress.value = true;
-//   currentPage.value = 1; // 搜索从第一页开始
-//   const name = inputsearch.value.trim(); // 获取搜索内容
-  // const categoryId = selectedCategoryId.value; // 获取选择的分类ID
-
-//   // 调用 API 获取数据
-//   fetchCandyList2(currentPage.value, pageSize.value, name, categoryId);
-// };
-
-// 获取糖果列表（包括分页和搜索）
-// const fetchCandyList2 = (pageNum, pageSize, name, categoryId) => {
-//   getcandyByWhere(pageNum, pageSize, name, categoryId)
-//     .then((res) => {
-//       if (res.data && res.data.pageInfo) {
-//         candyList.value = res.data.pageInfo.list || []; // 更新商品列表
-//         totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
-//       }
-//       showProgress.value = false;
-//     })
-//     .catch((err) => {
-//       console.error("查询失败: ", err);
-//       showProgress.value = false;
-//     });
-// };
-
-
-
-// // 搜索按钮点击事件处理
 const handleSearch = () => {
   showProgress.value = true;
   currentPage.value = 1; // 搜索从第一页开始
   const name = inputsearch.value.trim(); // 获取搜索内容
 
+  // 根据是否有搜索内容决定调用搜索接口
   if (name === "") {
-    // 如果搜索框为空，显示所有商品
-    currentPage.value = 1;  // 重置为第一页
-    fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
-  }
-  else {
-    getcandyByname(currentPage.value, pageSize.value, name)
-      .then((res) => {
-        candyList.value = res.data.list || []; // 更新商品列表
-        totalItems.value = res.data.total || 0; // 更新总记录数
-        showProgress.value = false;
-      })
-      .catch((err) => {
-        console.error("搜索失败: ", err);
-        showProgress.value = false;
-      });
+    fetchCandyList(currentPage.value, pageSize.value); // 获取全部商品
+  } else {
+    fetchCandyListByName(currentPage.value, pageSize.value, name); // 按名称搜索商品
   }
 };
 
 // 分页变化时的处理函数
 const handlePageChange = (page) => {
-  currentPage.value = page;
-  fetchCandyList(currentPage.value, pageSize.value);
+  currentPage.value = page; // 更新当前页码
+  const name = inputsearch.value.trim(); // 获取搜索框的内容
+  const categoryId = selectedCategoryId.value; // 获取当前选中的分类 ID
+
+  // 判断是否存在搜索条件或分类条件
+  if (name !== "") {
+    fetchCandyListByName(currentPage.value, pageSize.value, name); // 按名称搜索
+  // } else if (categoryId !== null) {
+  //   fetchCandyListByCategory(currentPage.value, pageSize.value, categoryId); // 按分类筛选
+  } else {
+    fetchCandyList(currentPage.value, pageSize.value); // 获取全部商品
+  }
 };
+
 
 function onCancel() {
   clicked.value = true
@@ -728,6 +711,26 @@ const Reload = () => {
 const onBack = () => {
   router.push('index');
 };
+
+// // 获取指定分类的商品列表
+// const fetchCandyListByCategory = () => {
+//   getcandyByCategory(currentPage.value, pageSize.value, selectedCategoryId.value)
+//     .then((response) => {
+//       candyList.value = response.data.pageInfo.list || [];
+//       totalItems.value = response.data.pageInfo.total || 0;
+//     })
+//     .catch((error) => {
+//       console.error("获取分类商品失败: ", error);
+//     });
+// };
+
+// // 分类改变时触发
+// const handleCategoryChange = (categoryId) => {
+//   selectedCategoryId.value = categoryId;
+//   currentPage.value = 1; // 切换分类从第一页开始
+//   fetchCandyListByCategory();
+// };
+
 
 
 </script>

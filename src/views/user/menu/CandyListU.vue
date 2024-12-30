@@ -18,11 +18,14 @@
             </template>
             <template #content>
                 <div class="search">
-                    <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'"
-                        clearable />
+                    <el-input v-model="inputsearch" style="width: 240px" placeholder="请输入商品" :prefix-icon="'Search'" clearable />
                     <el-button type="primary" @click="handleSearch">搜索</el-button>
+                    <!-- <el-select clearable v-model="candyList" value-key="id" :filter-method="handleSearch"
+                        @change="onCategoryChange" placeholder="糖果类型" style="width: 140px;margin-left: 20px;">
+                        <el-option v-for="item in cateList" :key="item.id" :label="item.name" :value="item" />
+                    </el-select> -->
                     <el-tooltip class="box-item" effect="light" content="刷新缓存" placement="top">
-                        <el-button @click="Reload" color="pink" circle><el-icon color="white" style="font-size: 20px;">
+                        <el-button style="margin-left: 20PX;" @click="Reload" color="pink" circle><el-icon color="white" style="font-size: 20px;">
                                 <Refresh />
                             </el-icon></el-button></el-tooltip>
                 </div>
@@ -36,8 +39,7 @@
                 <el-col :span="4" v-for="item in candyList" :key="item.id" :xl="4" :lg="5" :md="8" :sm="8" :xs="16">
                     <el-card style="max-width: 400px; margin-bottom: 15px;" shadow="hover" @click="AddCart(item)">
                         <!-- 使用动态绑定的图片 -->
-                        <el-image :src="item.imguid"
-                            style="width: 100%; height: 200px;">
+                        <el-image :src="item.imguid" style="width: 100%; height: 200px;">
                             <template #error>
                                 <div class="image-slot">
                                     <el-icon>
@@ -60,7 +62,8 @@
                                 <el-tooltip effect="dark" content="加入购物车" placement="bottom">
                                     <el-button circle color="#f1a03a" size="large" style="margin-left: 120px;"
                                         @click.stop="FastSaveCart(item)">
-                                        <el-icon :size="25" style="margin-left: -1px; margin-top: 3px; color: white;" class="font-extrabold">
+                                        <el-icon :size="25" style="margin-left: -1px; margin-top: 3px; color: white;"
+                                            class="font-extrabold">
                                             <ShoppingCart />
                                         </el-icon>
                                     </el-button>
@@ -171,7 +174,7 @@
                                     style="margin-top: -10px;">
                                     <el-text style="letter-spacing: 3px;" line-clamp="2">储存方法:{{
                                         AddCartCandy.storagemethod
-                                    }}</el-text>
+                                        }}</el-text>
                                 </el-form-item>
                             </div>
                         </div>
@@ -249,9 +252,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, toRaw, } from 'vue';
+import { ref, onMounted, computed, } from 'vue';
 import { useRouter } from 'vue-router';
-import { addToCart, createOrder, getcandy, getcandyByname, getcandyUser, getcarts, reloadCandy } from "../../../api/manager";
+import { addToCart , getcandyByWhereuser, getcandyuser, getcarts, reloadCandy } from "../../../api/manager";
 import { msgla } from '../../../composables/util';
 
 const router = useRouter();
@@ -267,47 +270,51 @@ const visible = ref(false);  //加入购物车抽屉默认关闭
 const addCartRef = ref(null); // 添加购物车绑定数据
 const buyNum = ref(1);  //默认buyNum为1
 const cartit = ref([]); //购物车数据
-// const diaOrder = ref(false);
-// const addOrderList = ref({})
-// const OrderRef = ref(null);
-// const Atuserinfo = ref({});
+
 
 // 组件挂载后执行的函数，初始化商品列表
 onMounted(() => {
     fetchCandyList(currentPage.value, pageSize.value);
     fetchCartList();
 
-    // const AtuserinfoStr = sessionStorage.getItem("Atuserinfo");
-    // if (AtuserinfoStr) {
-    //     try {
-    //         const user = JSON.parse(AtuserinfoStr);
-    //         Atuserinfo.value = user; // 更新响应式数据
-    //     } catch (error) {
-    //         console.error('无法从 sessionStorage 解析 Atuserinfo：', error);
-    //     }
-    // }
 });
 
 const money = computed(() => {
     return (AddCartCandy.value.price * buyNum.value);
 });
 
-// 获取商品列表数据
+// 获取全部商品列表
 const fetchCandyList = (pageNum, pageSize) => {
-    showProgress.value = true;
-    getcandyUser(pageNum, pageSize)
-        .then((res) => {
-            candyList.value = res.data.pageInfo.list;
-            totalItems.value = res.data.pageInfo.total;  // 设置总记录数
-            showProgress.value = false;
-        })
-        .catch((err) => {
-            console.error(err);
-            showProgress.value = false;
-        });
-    // console.log("Current Page: ", pageNum);
-    // console.log("Page Size: ", pageSize);
+  showProgress.value = true;
 
+  getcandyuser(pageNum, pageSize)
+    .then((res) => {
+      candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+      totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+      cateList.value = res.data.categoryList || []; // 更新类别数据
+      showProgress.value = false;
+    })
+    .catch((err) => {
+      console.error("查询失败: ", err);
+      showProgress.value = false;
+    });
+};
+
+// 按名称搜索商品列表
+const fetchCandyListByName = (pageNum, pageSize, name) => {
+  showProgress.value = true;
+
+  getcandyByWhereuser(pageNum, pageSize, name)
+    .then((res) => {
+      candyList.value = res.data.pageInfo.list || []; // 更新商品列表
+      totalItems.value = res.data.pageInfo.total || 0; // 更新总记录数
+      cateList.value = res.data.categoryList || []; // 更新类别数据
+      showProgress.value = false;
+    })
+    .catch((err) => {
+      console.error("查询失败: ", err);
+      showProgress.value = false;
+    });
 };
 
 // 获取购物车数据
@@ -335,33 +342,29 @@ const handleClose = () => {
 
 // 搜索按钮点击事件处理
 const handleSearch = () => {
-    showProgress.value = true;
-    currentPage.value = 1; // 搜索从第一页开始
-    const name = inputsearch.value.trim(); // 获取搜索内容
+  showProgress.value = true;
+  currentPage.value = 1; // 搜索从第一页开始
+  const name = inputsearch.value.trim(); // 获取搜索内容
 
-    if (name === "") {
-        // 如果搜索框为空，显示所有商品
-        currentPage.value = 1;  // 重置为第一页
-        fetchCandyList(currentPage.value, pageSize.value, true); // 显示所有商品
-    }
-    else {
-        getcandyByname(currentPage.value, pageSize.value, name)
-            .then((res) => {
-                candyList.value = res.data.list || []; // 更新商品列表
-                totalItems.value = res.data.total || 0; // 更新总记录数
-                showProgress.value = false;
-            })
-            .catch((err) => {
-                console.error("搜索失败: ", err);
-                showProgress.value = false;
-            });
-    }
+  // 根据是否有搜索内容决定调用搜索接口
+  if (name === "") {
+    fetchCandyList(currentPage.value, pageSize.value); // 获取全部商品
+  } else {
+    fetchCandyListByName(currentPage.value, pageSize.value, name); // 按名称搜索商品
+  }
 };
 
 // 分页变化时的处理函数
 const handlePageChange = (page) => {
-    currentPage.value = page;
-    fetchCandyList(currentPage.value, pageSize.value);
+  currentPage.value = page;
+  const name = inputsearch.value.trim(); // 获取当前搜索条件
+
+  // 根据是否有搜索内容决定调用对应的接口
+  if (name === "") {
+    fetchCandyList(currentPage.value, pageSize.value); // 获取全部商品
+  } else {
+    fetchCandyListByName(currentPage.value, pageSize.value, name); // 按名称搜索商品
+  }
 };
 
 // 返回按钮点击事件处理
