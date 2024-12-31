@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken } from "./composables/auth";
 
 const service = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: "http://121.40.60.41:8080",
   withCredentials: true // 确保在跨域请求中发送 Cookie 121.40.60.41
 });
 
